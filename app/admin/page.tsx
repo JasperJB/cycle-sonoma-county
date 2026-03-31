@@ -30,7 +30,7 @@ export default async function AdminPage({
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect("/auth/signin");
+    redirect("/auth/signin?returnTo=/admin");
   }
 
   if (user.globalRole !== "ADMIN") {

@@ -94,6 +94,23 @@ ensure_user_pool_client() {
     --output text
 }
 
+configure_user_pool_client() {
+  local pool_id="$1"
+  local client_id="$2"
+
+  aws_cognito update-user-pool-client \
+    --user-pool-id "$pool_id" \
+    --client-id "$client_id" \
+    --allowed-o-auth-flows-user-pool-client \
+    --allowed-o-auth-flows code \
+    --allowed-o-auth-scopes openid email profile aws.cognito.signin.user.admin \
+    --supported-identity-providers COGNITO \
+    --callback-urls $(split_words "$CALLBACK_URLS") \
+    --logout-urls $(split_words "$LOGOUT_URLS") \
+    --explicit-auth-flows ALLOW_REFRESH_TOKEN_AUTH \
+    >/dev/null
+}
+
 ensure_group() {
   local pool_id="$1"
   local group_name="$2"

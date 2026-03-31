@@ -58,11 +58,11 @@ export async function getSession() {
   }
 }
 
-export async function requireSession() {
+export async function requireSession(returnTo = "/account") {
   const session = await getSession();
 
   if (!session) {
-    redirect("/auth/signin");
+    redirect(`/auth/signin?returnTo=${encodeURIComponent(returnTo)}`);
   }
 
   return session;

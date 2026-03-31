@@ -6,7 +6,7 @@ import { requireSession } from "@/lib/auth/session";
 import { getCurrentUser } from "@/lib/auth/user";
 
 export default async function AccountPage() {
-  await requireSession();
+  await requireSession("/account");
   const user = await getCurrentUser();
 
   if (!user) {
