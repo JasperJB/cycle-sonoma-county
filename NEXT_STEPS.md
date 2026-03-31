@@ -39,7 +39,7 @@ $cronSecret | npx vercel env add CRON_SECRET preview --sensitive --force
 
 ```powershell
 $previewUrl = (npx vercel --yes).Trim()
-$prodUrl = (npx vercel --prod --yes).Trim()
+$prodUrl = 'https://cycle-sonoma-county.vercel.app'
 $cognitoEnv = & 'C:\Program Files\Git\bin\bash.exe' -lc "cd '/c/Users/jaspe/Documents/cycle-sonoma-county' && AWS_REGION=us-west-2 PROJECT_NAME=cycle-sonoma-county COGNITO_DOMAIN_PREFIX=cycle-sonoma-county-879555867547 LOCAL_URL=http://localhost:3000 PRODUCTION_URL=$prodUrl ./scripts/update-cognito-callbacks.sh"
 $cognitoEnv | Where-Object { $_ -match '^COGNITO_' } | ForEach-Object {
   $name, $value = $_ -split '=', 2
@@ -54,7 +54,7 @@ $prodUrl | npx vercel env add NEXT_PUBLIC_SITE_URL production --force
 npx vercel --prod --yes
 npx vercel curl / --deployment $previewUrl
 npx vercel curl / --deployment $prodUrl
-npx vercel logs --environment production --level error --since 5m
+npx vercel logs --environment production --level error --since 5m --no-follow
 ```
 
 ## Cognito Admin
