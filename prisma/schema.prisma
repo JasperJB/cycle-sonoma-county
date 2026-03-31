@@ -147,6 +147,8 @@ enum ReportStatus {
 model User {
   id                    String                   @id @default(cuid())
   email                 String                   @unique
+  firstName             String?
+  lastName              String?
   displayName           String?
   city                  String?
   avatarUrl             String?

@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { refreshCognitoTokens } from "@/lib/auth/cognito";
 import { env } from "@/lib/env";
 
 const SESSION_COOKIE = "cycle_sc_session";
@@ -8,8 +9,14 @@ const SESSION_COOKIE = "cycle_sc_session";
 export type SessionUser = {
   userId: string;
   email: string;
+  firstName?: string | null;
+  lastName?: string | null;
   displayName?: string | null;
   role: "MEMBER" | "ORGANIZER" | "ADMIN";
+  cognitoAccessToken?: string | null;
+  cognitoIdToken?: string | null;
+  cognitoRefreshToken?: string | null;
+  cognitoAccessTokenExpiresAt?: number | null;
 };
 
 function getSecret() {
@@ -58,8 +65,35 @@ export async function getSession() {
   }
 }
 
-export async function requireSession(returnTo = "/account") {
+export async function getSessionWithCognitoRefresh() {
   const session = await getSession();
+
+  if (!session) {
+    return null;
+  }
+
+  if (
+    session.cognitoRefreshToken &&
+    session.cognitoAccessTokenExpiresAt &&
+    session.cognitoAccessTokenExpiresAt <= Date.now() + 60_000
+  ) {
+    const refreshed = await refreshCognitoTokens(session.email, session.cognitoRefreshToken);
+    const updatedSession = {
+      ...session,
+      cognitoAccessToken: refreshed.accessToken,
+      cognitoIdToken: refreshed.idToken,
+      cognitoRefreshToken: refreshed.refreshToken,
+      cognitoAccessTokenExpiresAt: refreshed.expiresAt,
+    };
+    await setSession(updatedSession);
+    return updatedSession;
+  }
+
+  return session;
+}
+
+export async function requireSession(returnTo = "/account") {
+  const session = await getSessionWithCognitoRefresh();
 
   if (!session) {
     redirect(`/auth/signin?returnTo=${encodeURIComponent(returnTo)}`);

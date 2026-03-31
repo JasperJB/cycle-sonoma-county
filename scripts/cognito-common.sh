@@ -89,7 +89,7 @@ ensure_user_pool_client() {
     --supported-identity-providers COGNITO \
     --callback-urls $(split_words "$CALLBACK_URLS") \
     --logout-urls $(split_words "$LOGOUT_URLS") \
-    --explicit-auth-flows ALLOW_REFRESH_TOKEN_AUTH \
+    --explicit-auth-flows ALLOW_REFRESH_TOKEN_AUTH ALLOW_USER_PASSWORD_AUTH \
     --query 'UserPoolClient.ClientId' \
     --output text
 }
@@ -107,7 +107,7 @@ configure_user_pool_client() {
     --supported-identity-providers COGNITO \
     --callback-urls $(split_words "$CALLBACK_URLS") \
     --logout-urls $(split_words "$LOGOUT_URLS") \
-    --explicit-auth-flows ALLOW_REFRESH_TOKEN_AUTH \
+    --explicit-auth-flows ALLOW_REFRESH_TOKEN_AUTH ALLOW_USER_PASSWORD_AUTH \
     >/dev/null
 }
 

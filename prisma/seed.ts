@@ -77,6 +77,8 @@ async function main() {
   const adminUser = await prisma.user.create({
     data: {
       email: "admin@cyclesonoma.demo",
+      firstName: "Avery",
+      lastName: "Quinn",
       displayName: "Avery Quinn",
       city: "Santa Rosa",
       globalRole: UserRole.ADMIN,
@@ -89,6 +91,8 @@ async function main() {
   const organizerUser = await prisma.user.create({
     data: {
       email: "organizer@cyclesonoma.demo",
+      firstName: "Mira",
+      lastName: "Solis",
       displayName: "Mira Solis",
       city: "Sebastopol",
       globalRole: UserRole.ORGANIZER,
@@ -101,6 +105,8 @@ async function main() {
   const memberUser = await prisma.user.create({
     data: {
       email: "member@cyclesonoma.demo",
+      firstName: "Jonah",
+      lastName: "Hart",
       displayName: "Jonah Hart",
       city: "Petaluma",
       globalRole: UserRole.MEMBER,
@@ -112,6 +118,8 @@ async function main() {
   const shopOwner = await prisma.user.create({
     data: {
       email: "shop-owner@cyclesonoma.demo",
+      firstName: "Tessa",
+      lastName: "Lane",
       displayName: "Tessa Lane",
       city: "Santa Rosa",
       globalRole: UserRole.ORGANIZER,
@@ -123,6 +131,8 @@ async function main() {
   const clubLeader = await prisma.user.create({
     data: {
       email: "club-lead@cyclesonoma.demo",
+      firstName: "Diego",
+      lastName: "Mar",
       displayName: "Diego Mar",
       city: "Healdsburg",
       globalRole: UserRole.ORGANIZER,

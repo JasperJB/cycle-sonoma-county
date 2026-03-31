@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { PageShell, SectionHeading } from "@/components/page-shell";
+import { AccountProfileForm } from "@/components/forms/account-profile-form";
+import { ChangePasswordForm } from "@/components/forms/change-password-form";
 import { Button } from "@/components/ui/button";
 import { getAccountFavorites } from "@/lib/data/public";
 import { requireSession } from "@/lib/auth/session";
@@ -14,12 +16,16 @@ export default async function AccountPage() {
   }
 
   const accountData = await getAccountFavorites(user.id);
+  const welcomeName =
+    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+    user.displayName ||
+    user.email;
 
   return (
     <PageShell className="gap-8">
       <SectionHeading
         eyebrow="Account"
-        title={`Welcome back, ${user.displayName || user.email}`}
+        title={`Welcome back, ${welcomeName}`}
         description="Manage your profile, follow organizations, and track organizer verification status."
       />
       <section className="grid gap-5 lg:grid-cols-3">
@@ -49,6 +55,26 @@ export default async function AccountPage() {
           <p className="mt-2 text-sm leading-7 text-[var(--color-forest-muted)]">
             Organizations you follow for future personalization.
           </p>
+        </div>
+      </section>
+      <section className="grid gap-5 lg:grid-cols-2">
+        <div className="surface-card space-y-5 p-6">
+          <h2 className="font-heading text-3xl text-[var(--color-pine)]">Profile details</h2>
+          <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
+            Update the name shown across your account and organizer tools.
+          </p>
+          <AccountProfileForm
+            firstName={user.firstName}
+            lastName={user.lastName}
+            email={user.email}
+          />
+        </div>
+        <div className="surface-card space-y-5 p-6">
+          <h2 className="font-heading text-3xl text-[var(--color-pine)]">Security</h2>
+          <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
+            Change your password without leaving your account dashboard.
+          </p>
+          <ChangePasswordForm />
         </div>
       </section>
       <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">

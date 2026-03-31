@@ -22,6 +22,54 @@ export const newsletterSchema = z.object({
   email: z.email().trim().toLowerCase(),
 });
 
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters.")
+  .regex(/[A-Z]/, "Password must include an uppercase letter.")
+  .regex(/[a-z]/, "Password must include a lowercase letter.")
+  .regex(/[0-9]/, "Password must include a number.")
+  .regex(/[^A-Za-z0-9]/, "Password must include a symbol.");
+
+export const signInSchema = z.object({
+  email: z.email().trim().toLowerCase(),
+  password: z.string().min(1, "Enter your password."),
+  returnTo: z.string().trim().optional(),
+});
+
+export const signUpSchema = z
+  .object({
+    firstName: z.string().trim().min(2).max(80),
+    lastName: z.string().trim().min(2).max(80),
+    email: z.email().trim().toLowerCase(),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, "Confirm your password."),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
+
+export const confirmSignUpSchema = z.object({
+  email: z.email().trim().toLowerCase(),
+  code: z.string().trim().min(4).max(12),
+});
+
+export const accountProfileSchema = z.object({
+  firstName: z.string().trim().min(2).max(80),
+  lastName: z.string().trim().min(2).max(80),
+});
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password."),
+    newPassword: passwordSchema,
+    confirmNewPassword: z.string().min(1, "Confirm your new password."),
+  })
+  .refine((value) => value.newPassword === value.confirmNewPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmNewPassword"],
+  });
+
 export const verificationRequestSchema = z.object({
   organizationName: z.string().trim().min(3).max(120),
   organizationType: z.enum(OrganizationType),
