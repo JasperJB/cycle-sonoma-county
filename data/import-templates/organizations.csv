@@ -1,0 +1,3 @@
+name,organization_type,city,short_description,website_url,address_line1,phone,email,listing_status
+Example Cycle Works,SHOP,Santa Rosa,"Full-service fictional shop","https://example.com","123 Main St","707-555-0100","hello@example.com",DRAFT
+Example Community Club,CLUB,Petaluma,"Inclusive fictional club","https://example.org","","707-555-0199","club@example.org",DRAFT

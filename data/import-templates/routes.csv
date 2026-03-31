@@ -1,0 +1,2 @@
+organization_slug,title,city,distance_miles,elevation_feet,surface,best_season,start_location_name,summary,route_url,tourist_friendly,beginner_friendly
+example-community-club,Example Valley Loop,Sonoma,24,1200,PAVED,Spring,"Example Plaza","Fictional visitor route","https://ridewithgps.com/routes/example-route",true,true

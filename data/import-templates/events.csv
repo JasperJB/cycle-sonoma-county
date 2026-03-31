@@ -1,0 +1,2 @@
+organization_slug,title,city,event_type,starts_at_date,starts_at_time,ends_at_date,ends_at_time,location_name,summary,registration_url,price_text,is_recurring
+example-community-club,Example Skills Clinic,Petaluma,CLINIC,2026-05-01,10:00,2026-05-01,13:00,Example Community Hall,"Fictional clinic event","https://example.org/register","Free",false

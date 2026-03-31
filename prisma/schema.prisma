@@ -1,0 +1,568 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  MEMBER
+  ORGANIZER
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum OrganizationType {
+  SHOP
+  CLUB
+  TEAM
+  ADVOCACY
+  EVENT_PROMOTER
+  COACH
+  INFORMAL_GROUP
+}
+
+enum OrganizationMembershipRole {
+  OWNER
+  EDITOR
+  CONTRIBUTOR
+}
+
+enum ClubKind {
+  OFFICIAL
+  STRAVA
+  YOUTH
+  SCHOOL_MTB
+  SOCIAL
+}
+
+enum RideType {
+  ROAD
+  GRAVEL
+  MOUNTAIN
+  E_BIKE
+  COMMUTER
+  SOCIAL
+  TRAINING
+  WOMENS
+  JUNIOR
+  OTHER
+}
+
+enum DropPolicy {
+  NO_DROP
+  REGROUP
+  DROP
+}
+
+enum DifficultyLevel {
+  EASY
+  MODERATE
+  CHALLENGING
+  ADVANCED
+}
+
+enum EventType {
+  RACE
+  FONDO
+  CLINIC
+  TRAIL_WORK_DAY
+  SWAP_MEET
+  ADVOCACY_MEETING
+  FESTIVAL
+  YOUTH_EVENT
+  OTHER
+}
+
+enum SurfaceType {
+  PAVED
+  MIXED
+  GRAVEL
+  TRAIL
+}
+
+enum OccurrenceStatus {
+  SCHEDULED
+  CANCELED
+  RESCHEDULED
+  COMPLETED
+}
+
+enum OccurrenceOverrideType {
+  CANCELED
+  RESCHEDULED
+  UPDATED
+}
+
+enum FavoriteTargetType {
+  SHOP
+  CLUB
+  RIDE
+  EVENT
+  ROUTE
+}
+
+enum SponsorSlot {
+  HOME_HERO
+  FEATURED_CARD
+  NEWSLETTER
+  LISTING_BOOST
+}
+
+enum NewsletterStatus {
+  PENDING
+  ACTIVE
+  UNSUBSCRIBED
+}
+
+enum ReportReason {
+  INCORRECT_INFO
+  CANCELED_RIDE
+  INACTIVE_CLUB
+  DUPLICATE_LISTING
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+model User {
+  id                    String                   @id @default(cuid())
+  email                 String                   @unique
+  displayName           String?
+  city                  String?
+  avatarUrl             String?
+  bio                   String?
+  cognitoSub            String?                  @unique
+  globalRole            UserRole                 @default(MEMBER)
+  isOrganizerApproved   Boolean                  @default(false)
+  onboardingCompletedAt DateTime?
+  lastLoginAt           DateTime?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  verificationRequests  VerificationRequest[]
+  reviewedRequests      VerificationRequest[]    @relation("VerificationReviewedBy")
+  memberships           OrganizationMembership[]
+  favorites             Favorite[]
+  follows               Follow[]
+  reports               Report[]                 @relation("ReportReporter")
+  resolvedReports       Report[]                 @relation("ReportResolvedBy")
+  auditLogs             AuditLog[]
+}
+
+model VerificationRequest {
+  id                 String             @id @default(cuid())
+  userId             String
+  organizationId     String?
+  organizationName   String
+  organizationType   OrganizationType
+  websiteOrSocialUrl String
+  note               String?
+  status             VerificationStatus @default(PENDING)
+  adminNote          String?
+  reviewedById       String?
+  reviewedAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy         User?              @relation("VerificationReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  organization       Organization?      @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([userId, status])
+}
+
+model Organization {
+  id                  String                   @id @default(cuid())
+  slug                String                   @unique
+  name                String
+  shortDescription    String
+  description         String?
+  type                OrganizationType
+  listingStatus       ListingStatus            @default(DRAFT)
+  verificationStatus  VerificationStatus       @default(PENDING)
+  city                String
+  state               String                   @default("CA")
+  addressLine1        String?
+  addressLine2        String?
+  postalCode          String?
+  latitude            Float?
+  longitude           Float?
+  websiteUrl          String?
+  phone               String?
+  email               String?
+  instagramUrl        String?
+  stravaUrl           String?
+  logoUrl             String?
+  bannerUrl           String?
+  verifiedBadgeLabel  String?
+  searchDocument      String                   @default("")
+  publishedAt         DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  memberships         OrganizationMembership[]
+  shopProfile         ShopProfile?
+  clubProfile         ClubProfile?
+  rideSeries          RideSeries[]
+  eventSeries         EventSeries[]
+  routeGuides         RouteGuide[]
+  sponsorPlacements   SponsorPlacement[]
+  verificationRequests VerificationRequest[]
+  follows             Follow[]
+
+  @@index([type, listingStatus])
+  @@index([city, listingStatus])
+  @@index([verificationStatus, listingStatus])
+}
+
+model OrganizationMembership {
+  id             String                     @id @default(cuid())
+  userId         String
+  organizationId String
+  role           OrganizationMembershipRole @default(OWNER)
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+  user           User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, role])
+}
+
+model ShopProfile {
+  id                String       @id @default(cuid())
+  organizationId    String       @unique
+  serviceCategories String[]
+  brands            String[]
+  hours             Json?
+  offersRentals     Boolean      @default(false)
+  offersBikeFit     Boolean      @default(false)
+  offersRepair      Boolean      @default(true)
+  supportsEBikes    Boolean      @default(false)
+  rentalDetails     String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model ClubProfile {
+  id                  String       @id @default(cuid())
+  organizationId      String       @unique
+  clubKind            ClubKind
+  disciplines         String[]
+  audienceTags        String[]
+  membershipInfo      String?
+  whoItsFor           String?
+  regularScheduleText String?
+  socialLinks         Json?
+  youthFocused        Boolean      @default(false)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model RideSeries {
+  id                       String            @id @default(cuid())
+  organizationId           String
+  slug                     String            @unique
+  title                    String
+  summary                  String
+  description              String?
+  city                     String
+  listingStatus            ListingStatus     @default(DRAFT)
+  rideType                 RideType
+  paceLabel                String
+  dropPolicy               DropPolicy
+  difficulty               DifficultyLevel
+  skillLevel               String?
+  distanceMinMiles         Int?
+  distanceMaxMiles         Int?
+  elevationMinFeet         Int?
+  elevationMaxFeet         Int?
+  meetingLocationName      String
+  meetingAddress           String?
+  latitude                 Float?
+  longitude                Float?
+  startDate                DateTime
+  startTimeLocal           String
+  estimatedDurationMinutes Int
+  routeUrl                 String?
+  gpxUrl                   String?
+  rideWithGpsUrl           String?
+  stravaUrl                String?
+  rainPolicy               String?
+  helmetRequired           Boolean           @default(true)
+  beginnerFriendly         Boolean           @default(false)
+  youthFriendly            Boolean           @default(false)
+  recurrenceRule           String
+  recurrenceSummary        String
+  recurrenceTimezone       String            @default("America/Los_Angeles")
+  recurrenceEndsAt         DateTime?
+  lastConfirmedAt          DateTime?
+  staleAt                  DateTime?
+  needsReconfirmation      Boolean           @default(false)
+  searchDocument           String            @default("")
+  publishedAt              DateTime?
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  organization             Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  occurrences              RideOccurrence[]
+  exceptions               RideException[]
+
+  @@index([organizationId, listingStatus])
+  @@index([city, listingStatus])
+  @@index([lastConfirmedAt, needsReconfirmation])
+}
+
+model RideOccurrence {
+  id              String           @id @default(cuid())
+  rideSeriesId    String
+  startsAt        DateTime
+  endsAt          DateTime
+  status          OccurrenceStatus @default(SCHEDULED)
+  titleOverride   String?
+  summaryOverride String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  rideSeries      RideSeries       @relation(fields: [rideSeriesId], references: [id], onDelete: Cascade)
+
+  @@unique([rideSeriesId, startsAt])
+  @@index([startsAt, status])
+}
+
+model RideException {
+  id            String               @id @default(cuid())
+  rideSeriesId  String
+  occurrenceAt  DateTime
+  overrideType  OccurrenceOverrideType
+  newStartsAt   DateTime?
+  newEndsAt     DateTime?
+  note          String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  rideSeries    RideSeries           @relation(fields: [rideSeriesId], references: [id], onDelete: Cascade)
+
+  @@unique([rideSeriesId, occurrenceAt])
+  @@index([overrideType, occurrenceAt])
+}
+
+model EventSeries {
+  id                  String         @id @default(cuid())
+  organizationId      String
+  slug                String         @unique
+  title               String
+  summary             String
+  description         String?
+  city                String
+  listingStatus       ListingStatus  @default(DRAFT)
+  eventType           EventType
+  isRecurring         Boolean        @default(false)
+  startsAt            DateTime
+  endsAt              DateTime
+  locationName        String
+  locationAddress     String?
+  latitude            Float?
+  longitude           Float?
+  registrationUrl     String?
+  priceText           String?
+  coverImageUrl       String?
+  recurrenceRule      String?
+  recurrenceSummary   String?
+  recurrenceTimezone  String         @default("America/Los_Angeles")
+  recurrenceEndsAt    DateTime?
+  searchDocument      String         @default("")
+  publishedAt         DateTime?
+  autoArchiveAt       DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  organization        Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  occurrences         EventOccurrence[]
+
+  @@index([organizationId, listingStatus])
+  @@index([startsAt, listingStatus])
+  @@index([city, listingStatus])
+}
+
+model EventOccurrence {
+  id              String           @id @default(cuid())
+  eventSeriesId   String
+  startsAt        DateTime
+  endsAt          DateTime
+  status          OccurrenceStatus @default(SCHEDULED)
+  titleOverride   String?
+  summaryOverride String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  eventSeries     EventSeries      @relation(fields: [eventSeriesId], references: [id], onDelete: Cascade)
+
+  @@unique([eventSeriesId, startsAt])
+  @@index([startsAt, status])
+}
+
+model RouteGuide {
+  id                  String          @id @default(cuid())
+  organizationId      String?
+  slug                String          @unique
+  title               String
+  summary             String
+  description         String
+  city                String
+  listingStatus       ListingStatus   @default(DRAFT)
+  distanceMiles       Int
+  elevationFeet       Int
+  surface             SurfaceType
+  difficulty          DifficultyLevel
+  bestSeason          String
+  startLocationName   String
+  startAddress        String?
+  latitude            Float?
+  longitude           Float?
+  cautions            String?
+  routeUrl            String?
+  gpxUrl              String?
+  rideWithGpsUrl      String?
+  stravaUrl           String?
+  touristFriendly     Boolean         @default(false)
+  beginnerFriendly    Boolean         @default(false)
+  coverImageUrl       String?
+  searchDocument      String          @default("")
+  publishedAt         DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  organization        Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  sponsorPlacements   SponsorPlacement[]
+
+  @@index([city, listingStatus])
+  @@index([difficulty, listingStatus])
+}
+
+model Favorite {
+  id         String             @id @default(cuid())
+  userId     String
+  targetType FavoriteTargetType
+  targetId   String
+  createdAt  DateTime           @default(now())
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
+}
+
+model Follow {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+model SponsorPlacement {
+  id             String      @id @default(cuid())
+  slot           SponsorSlot
+  organizationId String?
+  routeGuideId   String?
+  title          String
+  blurb          String?
+  imageUrl       String?
+  href           String
+  priority       Int         @default(0)
+  activeFrom     DateTime?
+  activeTo       DateTime?
+  isActive       Boolean     @default(false)
+  impressionCount Int        @default(0)
+  clickCount     Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  routeGuide     RouteGuide?   @relation(fields: [routeGuideId], references: [id], onDelete: SetNull)
+
+  @@index([slot, isActive, priority])
+}
+
+model NewsletterSubscriber {
+  id               String           @id @default(cuid())
+  email            String           @unique
+  status           NewsletterStatus @default(PENDING)
+  confirmToken     String?
+  source           String?
+  subscribedAt     DateTime         @default(now())
+  unsubscribedAt   DateTime?
+  lastDigestSentAt DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+model NewsletterDigest {
+  id          String    @id @default(cuid())
+  digestDate  DateTime  @unique
+  dryRun      Boolean   @default(true)
+  status      String
+  subject     String
+  previewHtml String?
+  sentCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Report {
+  id               String       @id @default(cuid())
+  reporterUserId   String?
+  reporterEmail    String?
+  targetType       FavoriteTargetType
+  targetId         String
+  reason           ReportReason
+  description      String
+  status           ReportStatus @default(OPEN)
+  resolutionNote   String?
+  resolvedById     String?
+  resolvedAt       DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  reporter         User?        @relation("ReportReporter", fields: [reporterUserId], references: [id], onDelete: SetNull)
+  resolvedBy       User?        @relation("ReportResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorUserId String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  actor      User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([action, createdAt])
+}
+
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

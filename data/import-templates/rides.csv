@@ -1,0 +1,2 @@
+organization_slug,title,city,ride_type,pace_label,drop_policy,start_date,start_time_local,duration_minutes,meeting_location_name,summary,recurrence_mode,recurrence_interval,weekdays,route_url
+example-community-club,Example Wednesday Ride,Santa Rosa,ROAD,Steady B,REGROUP,2026-04-01,18:00,120,Example Plaza,"Fictional recurring ride",WEEKLY,1,"WE","https://ridewithgps.com/routes/example"
