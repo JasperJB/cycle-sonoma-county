@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:local": "tsx scripts/dev-local.ts",
-    "build": "next build",
+    "build": "tsx scripts/build.ts",
     "start": "next start",
     "lint": "eslint . --ignore-pattern coverage --ignore-pattern app/generated/prisma",
     "typecheck": "tsc --noEmit",
