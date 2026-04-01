@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/next";
 import { format } from "date-fns";
 import { ArrowRight, Compass, Flag, MapPinned, TentTree, Users } from "lucide-react";
 import { ContentCard } from "@/components/content-card";
@@ -194,6 +195,7 @@ export default async function HomePage() {
           </Button>
         </div>
       </section>
+      <Analytics />
     </PageShell>
   );
 }
