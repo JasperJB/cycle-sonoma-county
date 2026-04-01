@@ -23,7 +23,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
     prisma.organization.findMany({
       where: {
-        type: { in: ["CLUB", "TEAM", "ADVOCACY", "INFORMAL_GROUP"] },
+        type: {
+          in: ["CLUB", "TEAM", "ADVOCACY", "EVENT_PROMOTER", "COACH", "INFORMAL_GROUP"],
+        },
         listingStatus: "PUBLISHED",
       },
       select: { slug: true, updatedAt: true },

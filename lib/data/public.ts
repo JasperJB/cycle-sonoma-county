@@ -87,6 +87,8 @@ export async function getHomePageData() {
                   OrganizationType.CLUB,
                   OrganizationType.TEAM,
                   OrganizationType.ADVOCACY,
+                  OrganizationType.EVENT_PROMOTER,
+                  OrganizationType.COACH,
                   OrganizationType.INFORMAL_GROUP,
                 ],
               },
@@ -210,6 +212,8 @@ export async function getClubs(filters?: ExploreFilters) {
               OrganizationType.CLUB,
               OrganizationType.TEAM,
               OrganizationType.ADVOCACY,
+              OrganizationType.EVENT_PROMOTER,
+              OrganizationType.COACH,
               OrganizationType.INFORMAL_GROUP,
             ],
           },
@@ -452,6 +456,7 @@ export async function getShopBySlug(slug: string) {
       prisma.organization.findFirst({
         where: {
           slug,
+          ...publishedOrgWhere,
           type: OrganizationType.SHOP,
         },
         include: {
@@ -491,11 +496,14 @@ export async function getClubBySlug(slug: string) {
       prisma.organization.findFirst({
         where: {
           slug,
+          ...publishedOrgWhere,
           type: {
             in: [
               OrganizationType.CLUB,
               OrganizationType.TEAM,
               OrganizationType.ADVOCACY,
+              OrganizationType.EVENT_PROMOTER,
+              OrganizationType.COACH,
               OrganizationType.INFORMAL_GROUP,
             ],
           },
@@ -531,8 +539,11 @@ export async function getClubBySlug(slug: string) {
 export async function getRideBySlug(slug: string) {
   return safeQuery(
     () =>
-      prisma.rideSeries.findUnique({
-        where: { slug },
+      prisma.rideSeries.findFirst({
+        where: {
+          slug,
+          listingStatus: ListingStatus.PUBLISHED,
+        },
         include: {
           organization: true,
           occurrences: {
@@ -554,8 +565,11 @@ export async function getRideBySlug(slug: string) {
 export async function getEventBySlug(slug: string) {
   return safeQuery(
     () =>
-      prisma.eventSeries.findUnique({
-        where: { slug },
+      prisma.eventSeries.findFirst({
+        where: {
+          slug,
+          listingStatus: ListingStatus.PUBLISHED,
+        },
         include: {
           organization: true,
           occurrences: {
@@ -574,8 +588,11 @@ export async function getEventBySlug(slug: string) {
 export async function getRouteBySlug(slug: string) {
   return safeQuery(
     () =>
-      prisma.routeGuide.findUnique({
-        where: { slug },
+      prisma.routeGuide.findFirst({
+        where: {
+          slug,
+          listingStatus: ListingStatus.PUBLISHED,
+        },
         include: {
           organization: true,
           sponsorPlacements: true,

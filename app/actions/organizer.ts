@@ -4,6 +4,7 @@ import {
   DifficultyLevel,
   ListingStatus,
   OccurrenceStatus,
+  OrganizationType,
   OrganizationMembershipRole,
   UserRole,
   VerificationStatus,
@@ -38,6 +39,10 @@ function slug(value: string) {
 
 function searchDocument(parts: Array<string | undefined>) {
   return parts.filter(Boolean).join(" ").toLowerCase();
+}
+
+function organizationPublicPath(type: OrganizationType, slug: string) {
+  return type === OrganizationType.SHOP ? `/shops/${slug}` : `/clubs/${slug}`;
 }
 
 export async function createVerificationRequestAction(input: {
@@ -227,7 +232,57 @@ export async function createOrganizationAction(input: {
   return {
     ok: true,
     organizationId: organization.id,
-    message: "Organization draft created.",
+    message: "Organization draft saved. Drafts stay private until you publish them from the organizer console.",
+  };
+}
+
+export async function updateOrganizationListingStatusAction(
+  organizationId: string,
+  listingStatus: "DRAFT" | "PUBLISHED" | "ARCHIVED",
+) {
+  const user = await requireOrganizerUser();
+  const permitted = await canManageOrganization(user.id, organizationId);
+
+  if (!permitted) {
+    return { ok: false, message: "You cannot manage that organization." };
+  }
+
+  const organization = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: {
+      id: true,
+      slug: true,
+      type: true,
+    },
+  });
+
+  if (!organization) {
+    return { ok: false, message: "Organization not found." };
+  }
+
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: {
+      listingStatus,
+      publishedAt: listingStatus === ListingStatus.PUBLISHED ? new Date() : null,
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/explore");
+  revalidatePath("/shops");
+  revalidatePath("/clubs");
+  revalidatePath("/organizer");
+  revalidatePath(organizationPublicPath(organization.type, organization.slug));
+
+  return {
+    ok: true,
+    message:
+      listingStatus === ListingStatus.PUBLISHED
+        ? "Organization published."
+        : listingStatus === ListingStatus.ARCHIVED
+          ? "Organization archived."
+          : "Organization moved back to draft.",
   };
 }
 
