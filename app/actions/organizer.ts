@@ -5,6 +5,7 @@ import {
   ListingStatus,
   OccurrenceStatus,
   OrganizationMembershipRole,
+  UserRole,
   VerificationStatus,
 } from "@/app/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
@@ -83,6 +84,13 @@ export async function approveVerificationRequestAction(
   const admin = await requireAdminUser();
   const request = await prisma.verificationRequest.findUnique({
     where: { id: requestId },
+    include: {
+      user: {
+        select: {
+          globalRole: true,
+        },
+      },
+    },
   });
 
   if (!request) {
@@ -103,7 +111,8 @@ export async function approveVerificationRequestAction(
       where: { id: request.userId },
       data: {
         isOrganizerApproved: true,
-        globalRole: "ORGANIZER",
+        globalRole:
+          request.user.globalRole === UserRole.ADMIN ? UserRole.ADMIN : UserRole.ORGANIZER,
       },
     }),
     prisma.auditLog.create({

@@ -86,11 +86,16 @@ export default async function AccountPage() {
                 Your account can access organizer tools. If you have not created an
                 organization profile yet, the onboarding wizard is waiting for you.
               </p>
-              <Button asChild className="rounded-2xl px-5">
-                <Link href={user.globalRole === "ADMIN" ? "/admin" : "/organizer"}>
-                  Open dashboard
-                </Link>
-              </Button>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild className="rounded-2xl px-5">
+                  <Link href="/organizer">Open organizer console</Link>
+                </Button>
+                {user.globalRole === "ADMIN" ? (
+                  <Button asChild variant="outline" className="rounded-2xl px-5">
+                    <Link href="/admin">Open admin console</Link>
+                  </Button>
+                ) : null}
+              </div>
             </>
           ) : (
             <>

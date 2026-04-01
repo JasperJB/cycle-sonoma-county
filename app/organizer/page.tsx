@@ -17,10 +17,6 @@ export default async function OrganizerPage() {
     redirect("/auth/signin");
   }
 
-  if (user.globalRole === "ADMIN") {
-    redirect("/admin");
-  }
-
   if (!hasOrganizerAccess(user)) {
     return (
       <PageShell className="gap-8">
@@ -50,7 +46,7 @@ export default async function OrganizerPage() {
       <SectionHeading
         eyebrow="Organizer console"
         title="Manage organizations, listings, and recurring schedules"
-        description="Approved organizers can save drafts, add recurring rides and events, and build out a useful public profile over time."
+        description="Approved organizers can save drafts, add recurring rides and events, and build out a useful public profile over time. Admins retain full moderation access while using these same publishing tools."
       />
       <section className="grid gap-5 lg:grid-cols-4">
         <div className="surface-card p-6">
