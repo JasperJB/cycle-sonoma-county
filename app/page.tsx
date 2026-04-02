@@ -1,15 +1,14 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
 import { ArrowRight, Compass, Flag, MapPinned, TentTree, Users } from "lucide-react";
 import { ContentCard } from "@/components/content-card";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
+import { HomeHeroCarousel } from "@/components/home-hero-carousel";
 import { PageShell, SectionHeading } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getHomePageData } from "@/lib/data/public";
 import { formatOccurrenceStart } from "@/lib/recurrence";
-import ridingHero from "@/public/riding_hero.jpg";
 
 export const revalidate = 3600;
 
@@ -34,12 +33,12 @@ export default async function HomePage() {
             </Badge>
             <div className="space-y-4">
               <h1 className="max-w-4xl font-heading text-4xl leading-[0.95] text-[var(--color-pine)] sm:text-5xl lg:text-6xl">
-                Rides, routes, shops, and local cycling knowledge for Sonoma County.
+                Find friends, rides, routes, shops, and local cycling knowledge for Sonoma
+                County.
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-[var(--color-forest-muted)]">
-                Built for visitors hunting the right weekend ride and locals trying to
-                keep up with clubs, races, route ideas, and trusted organizer updates
-                without living in scattered group chats.
+                Find a ride, a route, a shop, or a local event without digging through
+                group chats and scattered posts.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -54,30 +53,7 @@ export default async function HomePage() {
               </Button>
             </div>
           </div>
-          <div className="relative">
-            <div className="absolute -right-6 top-6 hidden h-40 w-40 rounded-full bg-[color:var(--color-clay)]/12 blur-3xl lg:block" />
-            <div className="surface-card relative overflow-hidden p-3 sm:p-4">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] bg-[var(--color-pine)]">
-                <Image
-                  src={ridingHero}
-                  alt="Cyclists riding a coastal road in Sonoma County."
-                  fill
-                  preload
-                  sizes="(max-width: 1024px) 100vw, 42vw"
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(24,58,45,0.58)] via-[rgba(24,58,45,0.06)] to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 space-y-2 p-5 text-white sm:p-6">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/78">
-                    Sonoma coast roads
-                  </p>
-                  <p className="max-w-sm font-heading text-2xl leading-tight">
-                    The kind of ride that makes planning around Sonoma worth it.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <HomeHeroCarousel />
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -100,8 +76,8 @@ export default async function HomePage() {
         <div className="space-y-5">
           <SectionHeading
             eyebrow="This week"
-            title="What's happening in the next seven days"
-            description="A quick read on the next rides and events worth knowing about."
+            title="This week"
+            description="A quick look at the next rides and events."
           />
           <div className="grid gap-4">
             {[...data.thisWeekRides, ...data.thisWeekEvents]
@@ -146,8 +122,8 @@ export default async function HomePage() {
         <div className="space-y-5">
           <SectionHeading
             eyebrow="Featured"
-            title="Useful places to start"
-            description="A local-featured shop, club, and route to get oriented quickly."
+            title="Good places to start"
+            description="A featured shop, club, and route."
           />
           <div className="grid gap-4">
             {data.featuredShop ? (
@@ -205,8 +181,8 @@ export default async function HomePage() {
         <div className="space-y-4">
           <SectionHeading
             eyebrow="Newsletter"
-            title="One digest. The right amount of local signal."
-            description="Upcoming rides, notable events, featured route ideas, and sponsor spotlights without turning into a spam channel."
+            title="One local cycling email"
+            description="Upcoming rides, events, and route picks. No flood of emails."
           />
           <NewsletterForm source="homepage" />
         </div>
@@ -218,8 +194,7 @@ export default async function HomePage() {
             Run a shop, club, team, or ride series?
           </h3>
           <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
-            Get verified, publish your listings, and keep recurring rides current without
-            relying on social algorithms.
+            Get verified, publish your listings, and keep ride details current in one place.
           </p>
           <Button asChild className="rounded-2xl px-5">
             <Link href="/become-organizer">Apply for organizer access</Link>

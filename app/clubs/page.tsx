@@ -11,8 +11,8 @@ export default async function ClubsPage() {
     <PageShell className="gap-8">
       <SectionHeading
         eyebrow="Clubs and groups"
-        title="From race-focused crews to social groups and youth teams"
-        description="Official clubs, Strava-based groups, school MTB teams, advocacy collectives, and informal social rides all live in the same local graph."
+        title="Clubs, teams, and riding groups"
+        description="From race teams to casual group rides."
       />
       {clubs.length ? (
         <div className="grid gap-5 lg:grid-cols-3">
@@ -34,7 +34,7 @@ export default async function ClubsPage() {
       ) : (
         <EmptyState
           title="No clubs are published yet"
-          description="Clubs, teams, and social groups appear here after organizers publish their profiles."
+          description="Clubs and groups will show up here."
         />
       )}
     </PageShell>

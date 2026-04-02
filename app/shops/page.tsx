@@ -11,8 +11,8 @@ export default async function ShopsPage() {
     <PageShell className="gap-8">
       <SectionHeading
         eyebrow="Shops"
-        title="Bike shops worth keeping in your local loop"
-        description="Service, rentals, bike fitting, repairs, and ride-hosting shops that help anchor Sonoma County riding."
+        title="Local bike shops"
+        description="Repairs, rentals, fittings, and the shops that keep people riding."
       />
       {shops.length ? (
         <div className="grid gap-5 lg:grid-cols-3">
@@ -35,7 +35,7 @@ export default async function ShopsPage() {
       ) : (
         <EmptyState
           title="No shops are published yet"
-          description="Once verified organizers publish shop profiles, they will show up here."
+          description="Shop listings will show up here."
         />
       )}
     </PageShell>

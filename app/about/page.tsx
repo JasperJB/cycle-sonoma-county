@@ -8,7 +8,7 @@ export default function AboutPage() {
       <SectionHeading
         eyebrow="About / Contact"
         title="Built by someone who grew up riding here"
-        description="Cycle Sonoma County is a local project shaped by the roads, trails, race starts, and bike shops that make Sonoma County such a special place to ride."
+        description="A local project for people who ride here."
       />
       <section className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="surface-card space-y-5 p-6 sm:p-8">

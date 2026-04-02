@@ -12,8 +12,8 @@ export default async function EventsPage() {
     <PageShell className="gap-8">
       <SectionHeading
         eyebrow="Events"
-        title="One-off events and recurring calendars, kept separate from rides"
-        description="Fondos, clinics, youth events, trail work days, swap meets, advocacy meetings, and local festivals live here with their own event-specific detail pages."
+        title="Upcoming cycling events"
+        description="Fondos, clinics, youth events, trail days, swap meets, and more."
       />
       {events.length ? (
         <div className="grid gap-5 lg:grid-cols-3">
@@ -40,7 +40,7 @@ export default async function EventsPage() {
       ) : (
         <EmptyState
           title="No events are published yet"
-          description="Verified organizers can publish events separately from recurring ride series."
+          description="Events will show up here."
         />
       )}
     </PageShell>

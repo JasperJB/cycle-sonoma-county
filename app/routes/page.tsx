@@ -11,8 +11,8 @@ export default async function RoutesPage() {
     <PageShell className="gap-8">
       <SectionHeading
         eyebrow="Route guides"
-        title="Curated route ideas for visitors and locals"
-        description="Distance, elevation, seasonality, surface, cautions, and whether a route is tourist-friendly or beginner-friendly."
+        title="Route ideas for locals and visitors"
+        description="See distance, climbing, surface, and a few helpful notes before you roll out."
       />
       {routes.length ? (
         <div className="grid gap-5 lg:grid-cols-3">
@@ -35,7 +35,7 @@ export default async function RoutesPage() {
       ) : (
         <EmptyState
           title="No route guides are published yet"
-          description="Curated visitor and local routes will appear here once organizers and editors publish them."
+          description="Route guides will show up here."
         />
       )}
     </PageShell>

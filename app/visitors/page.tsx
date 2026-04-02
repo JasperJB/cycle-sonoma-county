@@ -13,8 +13,8 @@ export default async function VisitorsPage() {
     <PageShell className="gap-10">
       <SectionHeading
         eyebrow="For Visitors"
-        title="A calm starting point for your first Sonoma County weekend"
-        description="Rental-friendly shops, beginner-ready rides, route ideas, and local etiquette notes pulled from the same site data that powers the main directory."
+        title="Start here if you're visiting"
+        description="A few good routes, shops, rides, and local tips."
       />
       <section className="grid gap-5 lg:grid-cols-3">
         {data.routes.map((route) => (
@@ -33,8 +33,8 @@ export default async function VisitorsPage() {
         <div className="surface-card space-y-4 p-6">
           <SectionHeading
             eyebrow="Rental-friendly shops"
-            title="Pick a shop that can set you up quickly"
-            description="All listed here have rentals or visitor support baked into their profiles."
+            title="Need a rental or quick help?"
+            description="These shops are visitor-friendly."
           />
           <div className="grid gap-3">
             {data.shops.map((shop) => (
@@ -52,8 +52,8 @@ export default async function VisitorsPage() {
         <div className="surface-card space-y-4 p-6">
           <SectionHeading
             eyebrow="Beginner-friendly rides"
-            title="Join a social ride without guessing the vibe"
-            description="These ride series are flagged as no-drop or explicitly beginner-friendly."
+            title="Looking for an easy group ride?"
+            description="These rides are marked no-drop or beginner-friendly."
           />
           <div className="grid gap-3">
             {data.rides.map((ride) => (
@@ -80,7 +80,7 @@ export default async function VisitorsPage() {
         <div className="surface-card space-y-4 p-6">
           <SectionHeading
             eyebrow="Seasonal note"
-            title="What to expect this season"
+            title="Seasonal notes"
             description={data.seasonalNote}
           />
           <ul className="space-y-3 text-sm leading-7 text-[var(--color-forest-muted)]">
@@ -92,8 +92,8 @@ export default async function VisitorsPage() {
         <div className="surface-card space-y-4 p-6">
           <SectionHeading
             eyebrow="Stay in the loop"
-            title="Get the local weekend digest"
-            description="A single site-wide newsletter with route ideas, upcoming rides, and notable events."
+            title="Get the weekend email"
+            description="Route ideas, rides, and events in one note."
           />
           <NewsletterForm source="visitors" />
           <div className="grid gap-3">

@@ -12,8 +12,8 @@ export default async function RidesPage() {
     <PageShell className="gap-8">
       <SectionHeading
         eyebrow="Recurring rides"
-        title="Recurring ride series with pace, policy, and upcoming occurrences"
-        description="Road, gravel, mountain, e-bike, and social rides with separate recurrence logic, upcoming materialized dates, and stale-flag awareness."
+        title="Weekly rides around Sonoma County"
+        description="Road, gravel, mountain, e-bike, and social rides, all in one place."
       />
       {rides.length ? (
         <div className="grid gap-5 lg:grid-cols-3">
@@ -43,7 +43,7 @@ export default async function RidesPage() {
       ) : (
         <EmptyState
           title="No ride series are published yet"
-          description="Published recurring rides will show upcoming occurrences and stale confirmation signals here."
+          description="Published rides will show up here."
         />
       )}
     </PageShell>

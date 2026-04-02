@@ -32,8 +32,8 @@ export default async function ExplorePage({
     <PageShell className="gap-8">
       <SectionHeading
         eyebrow="Explore"
-        title="Map-first discovery for rides, routes, clubs, shops, and events"
-        description="Use server-side filters to narrow the county, then click between the map and list without losing context."
+        title="Find friends, rides, routes, clubs, shops, and events"
+        description="Filter the map and browse what's happening around the county."
       />
       <form className="surface-card grid gap-4 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-6">
         <input
