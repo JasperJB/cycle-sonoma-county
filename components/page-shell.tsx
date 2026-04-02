@@ -8,7 +8,12 @@ export function PageShell({
   className?: string;
 }) {
   return (
-    <main className={cn("mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-8 sm:px-6 lg:px-8", className)}>
+    <main
+      className={cn(
+        "mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col px-4 py-6 sm:px-6 sm:py-8 lg:px-8",
+        className,
+      )}
+    >
       {children}
     </main>
   );
@@ -30,7 +35,7 @@ export function SectionHeading({
           {eyebrow}
         </p>
       ) : null}
-      <h2 className="font-heading text-3xl leading-tight text-[var(--color-pine)] sm:text-4xl">
+      <h2 className="break-words font-heading text-2xl leading-tight text-[var(--color-pine)] sm:text-3xl lg:text-4xl">
         {title}
       </h2>
       {description ? (

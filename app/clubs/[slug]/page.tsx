@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ContentCard } from "@/components/content-card";
 import { FollowButton } from "@/components/follow-button";
-import { ReportForm } from "@/components/forms/report-form";
 import { ListingHero } from "@/components/listing-hero";
 import { PageShell } from "@/components/page-shell";
+import { ReportIssuePanel } from "@/components/report-issue-panel";
 import { getClubBySlug } from "@/lib/data/public";
 import { absoluteUrl, buildMetadata, organizationJsonLd } from "@/lib/seo";
 
@@ -70,13 +70,13 @@ export default async function ClubDetailPage({
         ]}
         actions={<FollowButton organizationId={club.id} />}
       />
-      <section className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
+      <section className="grid gap-6 lg:items-start lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
         <div className="surface-card space-y-4 p-6">
           <h2 className="font-heading text-3xl text-[var(--color-pine)]">About this group</h2>
           <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
             {club.clubProfile?.whoItsFor || club.description || club.shortDescription}
           </p>
-          <dl className="grid gap-4 text-sm leading-7 text-[var(--color-forest-muted)] sm:grid-cols-2">
+          <dl className="grid gap-4 text-sm leading-7 text-[var(--color-forest-muted)] sm:grid-cols-2 [&_dd]:break-words">
             <div>
               <dt className="font-medium text-[var(--color-pine)]">Membership</dt>
               <dd>{club.clubProfile?.membershipInfo || "See organizer profile"}</dd>
@@ -87,10 +87,7 @@ export default async function ClubDetailPage({
             </div>
           </dl>
         </div>
-        <div className="surface-card space-y-4 p-6">
-          <h2 className="font-heading text-3xl text-[var(--color-pine)]">Report incorrect info</h2>
-          <ReportForm targetId={club.id} targetType="CLUB" />
-        </div>
+        <ReportIssuePanel targetId={club.id} targetType="CLUB" />
       </section>
       <section className="grid gap-5 lg:grid-cols-2">
         {club.rideSeries.map((ride) => (

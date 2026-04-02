@@ -5,6 +5,7 @@ import { refreshCognitoTokens } from "@/lib/auth/cognito";
 import { env } from "@/lib/env";
 
 const SESSION_COOKIE = "cycle_sc_session";
+const REFRESH_COOKIE = "cycle_sc_refresh";
 
 export type SessionUser = {
   userId: string;
@@ -13,10 +14,11 @@ export type SessionUser = {
   lastName?: string | null;
   displayName?: string | null;
   role: "MEMBER" | "ORGANIZER" | "ADMIN";
-  cognitoAccessToken?: string | null;
-  cognitoIdToken?: string | null;
-  cognitoRefreshToken?: string | null;
-  cognitoAccessTokenExpiresAt?: number | null;
+};
+
+type RefreshSession = {
+  email: string;
+  refreshToken: string;
 };
 
 function getSecret() {
@@ -25,6 +27,14 @@ function getSecret() {
 
 export async function createSessionToken(user: SessionUser) {
   return new SignJWT(user)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("30d")
+    .sign(getSecret());
+}
+
+async function createRefreshTokenToken(refresh: RefreshSession) {
+  return new SignJWT(refresh)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("30d")
@@ -44,9 +54,28 @@ export async function setSession(user: SessionUser) {
   });
 }
 
+export async function setRefreshSession(email: string, refreshToken?: string | null) {
+  const cookieStore = await cookies();
+
+  if (!refreshToken) {
+    cookieStore.delete(REFRESH_COOKIE);
+    return;
+  }
+
+  const token = await createRefreshTokenToken({ email, refreshToken });
+  cookieStore.set(REFRESH_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+}
+
 export async function clearSession() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
+  cookieStore.delete(REFRESH_COOKIE);
 }
 
 export async function getSession() {
@@ -65,31 +94,34 @@ export async function getSession() {
   }
 }
 
-export async function getSessionWithCognitoRefresh() {
-  const session = await getSession();
+async function getRefreshSession() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(REFRESH_COOKIE)?.value;
 
-  if (!session) {
+  if (!token) {
     return null;
   }
 
-  if (
-    session.cognitoRefreshToken &&
-    session.cognitoAccessTokenExpiresAt &&
-    session.cognitoAccessTokenExpiresAt <= Date.now() + 60_000
-  ) {
-    const refreshed = await refreshCognitoTokens(session.email, session.cognitoRefreshToken);
-    const updatedSession = {
-      ...session,
-      cognitoAccessToken: refreshed.accessToken,
-      cognitoIdToken: refreshed.idToken,
-      cognitoRefreshToken: refreshed.refreshToken,
-      cognitoAccessTokenExpiresAt: refreshed.expiresAt,
-    };
-    await setSession(updatedSession);
-    return updatedSession;
+  try {
+    const result = await jwtVerify<RefreshSession>(token, getSecret());
+    return result.payload;
+  } catch {
+    return null;
+  }
+}
+
+export async function getCognitoAccessToken(email: string) {
+  const refreshSession = await getRefreshSession();
+
+  if (!refreshSession || refreshSession.email !== email) {
+    return null;
   }
 
-  return session;
+  return refreshCognitoTokens(email, refreshSession.refreshToken);
+}
+
+export async function getSessionWithCognitoRefresh() {
+  return getSession();
 }
 
 export async function requireSession(returnTo = "/account") {

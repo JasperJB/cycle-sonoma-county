@@ -12,7 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function ConfirmSignupForm({ defaultEmail = "" }: { defaultEmail?: string }) {
+export function ConfirmSignupForm({
+  defaultEmail = "",
+  returnTo = "/account",
+}: {
+  defaultEmail?: string;
+  returnTo?: string;
+}) {
   const router = useRouter();
   const [email, setEmail] = useState(defaultEmail);
   const [code, setCode] = useState("");
@@ -33,7 +39,9 @@ export function ConfirmSignupForm({ defaultEmail = "" }: { defaultEmail?: string
           }
 
           toast.success("Account confirmed. You can sign in now.");
-          router.push(`/auth/signin?email=${encodeURIComponent(email)}`);
+          router.push(
+            `/auth/signin?email=${encodeURIComponent(email)}&returnTo=${encodeURIComponent(returnTo)}`,
+          );
         });
       }}
     >
@@ -82,7 +90,7 @@ export function ConfirmSignupForm({ defaultEmail = "" }: { defaultEmail?: string
       <p className="text-sm leading-6 text-[var(--color-forest-muted)]">
         Already confirmed?{" "}
         <Link
-          href={`/auth/signin?email=${encodeURIComponent(email)}`}
+          href={`/auth/signin?email=${encodeURIComponent(email)}&returnTo=${encodeURIComponent(returnTo)}`}
           className="font-medium text-[var(--color-pine)]"
         >
           Sign in

@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { ContentCard } from "@/components/content-card";
 import { FavoriteButton } from "@/components/favorite-button";
 import { FollowButton } from "@/components/follow-button";
-import { ReportForm } from "@/components/forms/report-form";
 import { ListingHero } from "@/components/listing-hero";
 import { PageShell } from "@/components/page-shell";
+import { ReportIssuePanel } from "@/components/report-issue-panel";
 import { getShopBySlug } from "@/lib/data/public";
+import { formatOccurrenceStart } from "@/lib/recurrence";
 import { absoluteUrl, buildMetadata, organizationJsonLd } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -76,10 +77,10 @@ export default async function ShopDetailPage({
           </>
         }
       />
-      <section className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
+      <section className="grid gap-6 lg:items-start lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
         <div className="surface-card space-y-4 p-6">
           <h2 className="font-heading text-3xl text-[var(--color-pine)]">Shop details</h2>
-          <dl className="grid gap-4 text-sm leading-7 text-[var(--color-forest-muted)] sm:grid-cols-2">
+          <dl className="grid gap-4 text-sm leading-7 text-[var(--color-forest-muted)] sm:grid-cols-2 [&_dd]:break-words">
             <div>
               <dt className="font-medium text-[var(--color-pine)]">Address</dt>
               <dd>{shop.addressLine1 || "Location shared on request"}</dd>
@@ -114,10 +115,7 @@ export default async function ShopDetailPage({
             </div>
           ) : null}
         </div>
-        <div className="surface-card space-y-4 p-6">
-          <h2 className="font-heading text-3xl text-[var(--color-pine)]">Report incorrect info</h2>
-          <ReportForm targetId={shop.id} targetType="SHOP" />
-        </div>
+        <ReportIssuePanel targetId={shop.id} targetType="SHOP" />
       </section>
       <section className="grid gap-5 lg:grid-cols-2">
         {shop.rideSeries.map((ride) => (
@@ -127,7 +125,14 @@ export default async function ShopDetailPage({
             title={ride.title}
             summary={ride.summary}
             eyebrow="Hosted ride"
-            meta={ride.occurrences[0] ? ride.occurrences[0].startsAt.toLocaleString() : ride.recurrenceSummary}
+            meta={
+              ride.occurrences[0]
+                ? formatOccurrenceStart(
+                    ride.occurrences[0].startsAt,
+                    ride.recurrenceTimezone || undefined,
+                  )
+                : ride.recurrenceSummary
+            }
             badges={[ride.rideType, ride.dropPolicy]}
           />
         ))}
@@ -138,7 +143,14 @@ export default async function ShopDetailPage({
             title={event.title}
             summary={event.summary}
             eyebrow="Hosted event"
-            meta={event.occurrences[0] ? event.occurrences[0].startsAt.toLocaleString() : event.priceText || ""}
+            meta={
+              event.occurrences[0]
+                ? formatOccurrenceStart(
+                    event.occurrences[0].startsAt,
+                    event.recurrenceTimezone || undefined,
+                  )
+                : event.priceText || ""
+            }
             badges={[event.eventType]}
           />
         ))}

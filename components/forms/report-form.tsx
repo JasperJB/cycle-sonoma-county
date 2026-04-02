@@ -74,7 +74,12 @@ export function ReportForm({
         <label className="text-sm font-medium text-[var(--color-pine)]">Email if you want a follow-up</label>
         <Input {...form.register("reporterEmail")} className="rounded-2xl bg-white/85" />
       </div>
-      <Button type="submit" disabled={isPending} className="w-fit rounded-2xl px-6">
+      <Button
+        type="submit"
+        variant="outline"
+        disabled={isPending}
+        className="w-fit rounded-2xl border-[color:var(--color-border-soft)] bg-white/70 px-6 text-[var(--color-pine)] hover:bg-white"
+      >
         Submit report
       </Button>
     </form>

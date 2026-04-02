@@ -17,7 +17,7 @@ export default async function SignInPage({
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-forest-soft)]">
             Account access
           </p>
-          <h1 className="font-heading text-5xl leading-tight text-[var(--color-pine)] sm:text-6xl">
+          <h1 className="font-heading text-4xl leading-tight text-[var(--color-pine)] sm:text-5xl lg:text-6xl">
             Sign in without leaving the trail map behind.
           </h1>
           <p className="max-w-2xl text-base leading-7 text-[var(--color-forest-muted)]">

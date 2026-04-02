@@ -1,8 +1,8 @@
-import { format } from "date-fns";
 import { ContentCard } from "@/components/content-card";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
 import { PageShell, SectionHeading } from "@/components/page-shell";
 import { getVisitorPageData } from "@/lib/data/public";
+import { formatOccurrenceStart } from "@/lib/recurrence";
 
 export const revalidate = 3600;
 
@@ -64,7 +64,10 @@ export default async function VisitorsPage() {
                 summary={ride.summary}
                 meta={
                   ride.occurrences[0]
-                    ? format(ride.occurrences[0].startsAt, "EEE, MMM d • h:mm a")
+                    ? formatOccurrenceStart(
+                        ride.occurrences[0].startsAt,
+                        ride.recurrenceTimezone || undefined,
+                      )
                     : ride.organization.name
                 }
                 badges={[ride.organization.name, ride.rideType]}
@@ -100,7 +103,15 @@ export default async function VisitorsPage() {
                 href={`/events/${event.slug}`}
                 title={event.title}
                 summary={event.summary}
-                meta={event.occurrences[0] ? format(event.occurrences[0].startsAt, "EEE, MMM d") : ""}
+                meta={
+                  event.occurrences[0]
+                    ? formatOccurrenceStart(
+                        event.occurrences[0].startsAt,
+                        event.recurrenceTimezone || undefined,
+                        "EEE, MMM d",
+                      )
+                    : ""
+                }
                 badges={[event.organization.name, event.eventType]}
               />
             ))}

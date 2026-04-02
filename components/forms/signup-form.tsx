@@ -9,11 +9,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function SignUpForm() {
+export function SignUpForm({
+  defaultEmail = "",
+  inviteToken,
+  inviteDetails,
+}: {
+  defaultEmail?: string;
+  inviteToken?: string;
+  inviteDetails?: {
+    inviterName: string;
+    organizationNames: string[];
+  } | null;
+}) {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -30,6 +41,7 @@ export function SignUpForm() {
             email,
             password,
             confirmPassword,
+            inviteToken,
           });
 
           if (!result.ok) {
@@ -38,10 +50,26 @@ export function SignUpForm() {
           }
 
           toast.success("Check your email for the confirmation code.");
-          router.push(`/auth/confirm?email=${encodeURIComponent(result.email || email)}`);
+          const confirmUrl = new URL("/auth/confirm", window.location.origin);
+          confirmUrl.searchParams.set("email", result.email || email);
+          if (inviteToken) {
+            confirmUrl.searchParams.set("returnTo", "/organizer");
+          }
+          router.push(`${confirmUrl.pathname}${confirmUrl.search}`);
         });
       }}
     >
+      {inviteDetails ? (
+        <div className="rounded-2xl border border-[color:var(--color-border-soft)] bg-white/70 px-4 py-3 text-sm leading-6 text-[var(--color-forest-muted)]">
+          <p className="font-medium text-[var(--color-pine)]">
+            {inviteDetails.inviterName} shared organizer access with you.
+          </p>
+          <p>
+            This account will be connected to {inviteDetails.organizationNames.join(", ")} after
+            you confirm your email and sign in.
+          </p>
+        </div>
+      ) : null}
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="signup-first-name">First name</Label>
@@ -100,15 +128,22 @@ export function SignUpForm() {
         </div>
       </div>
       <p className="rounded-2xl border border-[color:var(--color-border-soft)] bg-white/65 px-4 py-3 text-sm leading-6 text-[var(--color-forest-muted)]">
-        Passwords must be at least 8 characters and include uppercase, lowercase,
-        number, and symbol characters.
+        Passwords must be at least 8 characters and include uppercase, lowercase, number, and
+        symbol characters.
       </p>
       <Button type="submit" disabled={isPending} className="h-12 rounded-2xl">
         {isPending ? "Creating account..." : "Create account"}
       </Button>
       <p className="text-sm leading-6 text-[var(--color-forest-muted)]">
         Already have an account?{" "}
-        <Link href="/auth/signin" className="font-medium text-[var(--color-pine)]">
+        <Link
+          href={
+            inviteToken
+              ? `/auth/signin?email=${encodeURIComponent(email)}&returnTo=${encodeURIComponent("/organizer")}`
+              : "/auth/signin"
+          }
+          className="font-medium text-[var(--color-pine)]"
+        >
           Sign in
         </Link>
         .

@@ -27,6 +27,19 @@ const cognitoClient = new CognitoIdentityProviderClient({
   region: env.COGNITO_REGION,
 });
 
+function requirePasswordClientConfig() {
+  if (!env.COGNITO_CLIENT_ID) {
+    throw new Error("Sign-in is not configured on this deployment. Missing Cognito client ID.");
+  }
+
+  // This repository's Cognito bootstrap creates a secret-enabled app client.
+  if (!env.COGNITO_CLIENT_SECRET) {
+    throw new Error(
+      "Sign-in is misconfigured on this deployment. Missing Cognito client secret.",
+    );
+  }
+}
+
 function base64Url(input: Uint8Array | Buffer) {
   return Buffer.from(input).toString("base64url");
 }
@@ -234,6 +247,7 @@ export async function signUpWithPassword(input: {
   email: string;
   password: string;
 }) {
+  requirePasswordClientConfig();
   const secretHash = getSecretHash(input.email);
 
   await cognitoClient.send(
@@ -253,6 +267,7 @@ export async function signUpWithPassword(input: {
 }
 
 export async function confirmSignUp(email: string, code: string) {
+  requirePasswordClientConfig();
   await cognitoClient.send(
     new ConfirmSignUpCommand({
       ClientId: env.COGNITO_CLIENT_ID,
@@ -264,6 +279,7 @@ export async function confirmSignUp(email: string, code: string) {
 }
 
 export async function resendConfirmationCode(email: string) {
+  requirePasswordClientConfig();
   await cognitoClient.send(
     new ResendConfirmationCodeCommand({
       ClientId: env.COGNITO_CLIENT_ID,
@@ -274,6 +290,7 @@ export async function resendConfirmationCode(email: string) {
 }
 
 export async function signInWithPassword(email: string, password: string) {
+  requirePasswordClientConfig();
   const response = await cognitoClient.send(
     new InitiateAuthCommand({
       AuthFlow: "USER_PASSWORD_AUTH",
@@ -318,6 +335,7 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function refreshCognitoTokens(email: string, refreshToken: string) {
+  requirePasswordClientConfig();
   const response = await cognitoClient.send(
     new InitiateAuthCommand({
       AuthFlow: "REFRESH_TOKEN_AUTH",

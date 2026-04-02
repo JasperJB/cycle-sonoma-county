@@ -1,4 +1,4 @@
-import { UserRole } from "@/app/generated/prisma/enums";
+import { OrganizationMembershipRole, UserRole } from "@/app/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/user";
 import { requireSession } from "@/lib/auth/session";
@@ -56,6 +56,28 @@ export async function canManageOrganization(userId: string, organizationId: stri
       userId,
       organizationId,
     },
+  });
+
+  return Boolean(membership);
+}
+
+export async function canAdministerOrganization(userId: string, organizationId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { globalRole: true },
+  });
+
+  if (user?.globalRole === UserRole.ADMIN) {
+    return true;
+  }
+
+  const membership = await prisma.organizationMembership.findFirst({
+    where: {
+      userId,
+      organizationId,
+      role: OrganizationMembershipRole.OWNER,
+    },
+    select: { id: true },
   });
 
   return Boolean(membership);

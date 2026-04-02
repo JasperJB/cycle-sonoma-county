@@ -62,6 +62,7 @@
 
   html {
     @apply bg-background font-sans text-foreground;
+    scroll-padding-top: 5.5rem;
   }
 
   body {
@@ -82,7 +83,7 @@
 
 @layer components {
   .surface-card {
-    @apply rounded-[1.4rem] border border-[color:var(--color-border-soft)] bg-white/70 shadow-[0_16px_60px_-30px_rgba(24,58,45,0.35)] backdrop-blur;
+    @apply min-w-0 rounded-[1.4rem] border border-[color:var(--color-border-soft)] bg-white/70 shadow-[0_16px_60px_-30px_rgba(24,58,45,0.35)] backdrop-blur;
   }
 
   .subtle-grid {
@@ -97,6 +98,77 @@
       radial-gradient(circle at 15% 10%, rgba(209, 161, 111, 0.24), transparent 32%),
       radial-gradient(circle at 85% 0%, rgba(81, 128, 104, 0.28), transparent 34%),
       linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(239, 230, 215, 0.72));
+  }
+
+  .organizer-hero {
+    background:
+      radial-gradient(circle at 12% 12%, rgba(209, 161, 111, 0.28), transparent 30%),
+      radial-gradient(circle at 88% 0%, rgba(81, 128, 104, 0.22), transparent 34%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(239, 230, 215, 0.78));
+  }
+
+  .organizer-panel {
+    @apply relative overflow-hidden rounded-[1.6rem] border border-[color:var(--color-border-soft)] bg-white/78 backdrop-blur;
+    box-shadow: 0 18px 70px -42px rgba(24, 58, 45, 0.42);
+    transition:
+      transform 220ms ease,
+      box-shadow 220ms ease,
+      border-color 220ms ease,
+      background-color 220ms ease;
+  }
+
+  .organizer-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 28px 90px -46px rgba(24, 58, 45, 0.5);
+    border-color: rgba(24, 58, 45, 0.2);
+  }
+
+  .organizer-stat {
+    @apply relative overflow-hidden;
+  }
+
+  .organizer-stat::after {
+    content: "";
+    position: absolute;
+    inset: auto -30% -40% auto;
+    width: 8rem;
+    height: 8rem;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(209, 161, 111, 0.16), transparent 68%);
+    pointer-events: none;
+    transition: transform 260ms ease;
+  }
+
+  .organizer-stat:hover::after {
+    transform: scale(1.08);
+  }
+
+  .organizer-stagger {
+    animation: organizer-fade-up 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--delay, 0ms);
+  }
+}
+
+@keyframes organizer-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .organizer-panel,
+  .organizer-panel:hover,
+  .organizer-stat::after,
+  .organizer-stagger {
+    animation: none;
+    transform: none;
+    transition: none;
   }
 }
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { exchangeCodeForUser } from "@/lib/auth/cognito";
 import { sessionFromUser, syncUserFromIdentity } from "@/lib/auth/user";
-import { setSession } from "@/lib/auth/session";
+import { setRefreshSession, setSession } from "@/lib/auth/session";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -24,15 +24,8 @@ export async function GET(request: Request) {
     groups: claims["cognito:groups"],
   });
 
-  await setSession(
-    sessionFromUser({
-      ...user,
-      cognitoAccessToken: tokens.accessToken,
-      cognitoIdToken: tokens.idToken,
-      cognitoRefreshToken: tokens.refreshToken,
-      cognitoAccessTokenExpiresAt: tokens.expiresAt,
-    }),
-  );
+  await setSession(sessionFromUser(user));
+  await setRefreshSession(user.email, tokens.refreshToken);
 
   return NextResponse.redirect(new URL(returnTo, url));
 }

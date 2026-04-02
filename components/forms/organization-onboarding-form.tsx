@@ -5,11 +5,17 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { createOrganizationAction } from "@/app/actions/organizer";
+import {
+  createOrganizationAction,
+  updateOrganizationAction,
+} from "@/app/actions/organizer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { organizationOnboardingSchema } from "@/lib/validators";
+import {
+  organizationOnboardingSchema,
+  type OrganizationOnboardingInput,
+} from "@/lib/validators";
 
 const types = [
   "SHOP",
@@ -21,21 +27,40 @@ const types = [
   "INFORMAL_GROUP",
 ] as const;
 
-export function OrganizationOnboardingForm() {
+function buildDefaultValues(
+  initialValues?: Partial<OrganizationOnboardingInput>,
+): OrganizationOnboardingInput {
+  return {
+    organizationType: initialValues?.organizationType || "CLUB",
+    name: initialValues?.name || "",
+    shortDescription: initialValues?.shortDescription || "",
+    description: initialValues?.description || "",
+    city: initialValues?.city || "",
+    websiteUrl: initialValues?.websiteUrl || "",
+    socialUrl: initialValues?.socialUrl || "",
+    addressLine1: initialValues?.addressLine1 || "",
+    latitude: initialValues?.latitude,
+    longitude: initialValues?.longitude,
+  };
+}
+
+export function OrganizationOnboardingForm({
+  organizationId,
+  initialValues,
+  submitLabel = "Save organization draft",
+  redirectTo,
+}: {
+  organizationId?: string;
+  initialValues?: Partial<OrganizationOnboardingInput>;
+  submitLabel?: string;
+  redirectTo?: string;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const defaultValues = buildDefaultValues(initialValues);
   const form = useForm({
     resolver: zodResolver(organizationOnboardingSchema),
-    defaultValues: {
-      organizationType: "CLUB",
-      name: "",
-      shortDescription: "",
-      description: "",
-      city: "",
-      websiteUrl: "",
-      socialUrl: "",
-      addressLine1: "",
-    },
+    defaultValues,
   });
 
   return (
@@ -43,14 +68,26 @@ export function OrganizationOnboardingForm() {
       className="grid gap-4"
       onSubmit={form.handleSubmit((values) =>
         startTransition(async () => {
-          const result = await createOrganizationAction(values as Parameters<typeof createOrganizationAction>[0]);
+          const result = organizationId
+            ? await updateOrganizationAction(organizationId, values as OrganizationOnboardingInput)
+            : await createOrganizationAction(values as OrganizationOnboardingInput);
 
           if (!result.ok) {
-            toast.error(result.message || "Unable to create organization.");
+            toast.error(result.message || "Unable to save organization.");
             return;
           }
 
           toast.success(result.message);
+
+          if (redirectTo) {
+            router.push(redirectTo);
+            return;
+          }
+
+          if (!organizationId) {
+            form.reset(buildDefaultValues());
+          }
+
           router.refresh();
         }),
       )}
@@ -97,11 +134,20 @@ export function OrganizationOnboardingForm() {
         </div>
       </div>
       <div className="grid gap-2">
-        <label className="text-sm font-medium text-[var(--color-pine)]">Address (optional)</label>
-        <Input {...form.register("addressLine1")} className="rounded-2xl bg-white/85" />
+        <label className="text-sm font-medium text-[var(--color-pine)]">
+          Address or meetup spot
+        </label>
+        <Input
+          {...form.register("addressLine1")}
+          placeholder="123 Example St"
+          className="rounded-2xl bg-white/85"
+        />
+        <p className="text-xs text-[var(--color-forest-muted)]">
+          This address is geocoded when you save so the organization can show up on the explore map.
+        </p>
       </div>
       <Button type="submit" disabled={isPending} className="w-fit rounded-2xl px-6">
-        Save organization draft
+        {submitLabel}
       </Button>
     </form>
   );

@@ -1,7 +1,7 @@
-import { format } from "date-fns";
 import { ContentCard, EmptyState } from "@/components/content-card";
 import { PageShell, SectionHeading } from "@/components/page-shell";
 import { getRides } from "@/lib/data/public";
+import { formatOccurrenceStart } from "@/lib/recurrence";
 
 export const revalidate = 900;
 
@@ -26,7 +26,10 @@ export default async function RidesPage() {
               eyebrow={ride.organization.name}
               meta={
                 ride.occurrences[0]
-                  ? format(ride.occurrences[0].startsAt, "EEE, MMM d • h:mm a")
+                  ? formatOccurrenceStart(
+                      ride.occurrences[0].startsAt,
+                      ride.recurrenceTimezone || undefined,
+                    )
                   : ride.recurrenceSummary
               }
               badges={[

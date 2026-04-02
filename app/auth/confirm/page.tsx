@@ -8,6 +8,7 @@ export default async function ConfirmPage({
 }) {
   const params = await searchParams;
   const email = Array.isArray(params.email) ? params.email[0] : params.email;
+  const returnTo = Array.isArray(params.returnTo) ? params.returnTo[0] : params.returnTo;
 
   return (
     <PageShell className="justify-center py-12">
@@ -16,7 +17,7 @@ export default async function ConfirmPage({
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-forest-soft)]">
             Confirm your email
           </p>
-          <h1 className="font-heading text-5xl leading-tight text-[var(--color-pine)] sm:text-6xl">
+          <h1 className="font-heading text-4xl leading-tight text-[var(--color-pine)] sm:text-5xl lg:text-6xl">
             One last code and your account is ready.
           </h1>
           <p className="max-w-2xl text-base leading-7 text-[var(--color-forest-muted)]">
@@ -29,7 +30,7 @@ export default async function ConfirmPage({
             title="Confirm sign up"
             description="Enter the code from your email to activate the account."
           />
-          <ConfirmSignupForm defaultEmail={email || ""} />
+          <ConfirmSignupForm defaultEmail={email || ""} returnTo={returnTo || "/account"} />
         </div>
       </section>
     </PageShell>

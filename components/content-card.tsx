@@ -24,7 +24,7 @@ export function ContentCard({
     <Link
       href={href}
       className={cn(
-        "surface-card group flex h-full flex-col gap-4 p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--color-clay)]/30 hover:shadow-[0_22px_70px_-35px_rgba(24,58,45,0.4)]",
+        "surface-card group flex h-full min-w-0 flex-col gap-4 p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--color-clay)]/30 hover:shadow-[0_22px_70px_-35px_rgba(24,58,45,0.4)]",
         className,
       )}
     >
@@ -35,15 +35,15 @@ export function ContentCard({
           </p>
         ) : null}
         <div className="flex items-start justify-between gap-3">
-          <h3 className="font-heading text-2xl leading-tight text-[var(--color-pine)]">
+          <h3 className="min-w-0 break-words font-heading text-xl leading-tight text-[var(--color-pine)] sm:text-2xl">
             {title}
           </h3>
           <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-[var(--color-forest-soft)] transition group-hover:text-[var(--color-clay)]" />
         </div>
       </div>
-      <p className="text-sm leading-6 text-[var(--color-forest-muted)]">{summary}</p>
+      <p className="break-words text-sm leading-6 text-[var(--color-forest-muted)]">{summary}</p>
       {meta ? (
-        <p className="text-sm font-medium text-[var(--color-pine)]">{meta}</p>
+        <p className="break-words text-sm font-medium text-[var(--color-pine)]">{meta}</p>
       ) : null}
       {badges?.length ? (
         <div className="mt-auto flex flex-wrap gap-2">

@@ -99,6 +99,39 @@ export async function getOrganizerDashboardData(userId: string) {
               rideSeries: true,
               eventSeries: true,
               routeGuides: true,
+              memberships: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      email: true,
+                      displayName: true,
+                      firstName: true,
+                      lastName: true,
+                    },
+                  },
+                },
+                orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+              },
+              invites: {
+                where: {
+                  acceptedAt: null,
+                  revokedAt: null,
+                  expiresAt: { gt: new Date() },
+                },
+                include: {
+                  invitedBy: {
+                    select: {
+                      id: true,
+                      email: true,
+                      displayName: true,
+                      firstName: true,
+                      lastName: true,
+                    },
+                  },
+                },
+                orderBy: { createdAt: "desc" },
+              },
             },
           },
         },
@@ -109,7 +142,10 @@ export async function getOrganizerDashboardData(userId: string) {
     },
   });
 
-  const organizations = user.memberships.map((membership) => membership.organization);
+  const organizations = user.memberships.map((membership) => ({
+    ...membership.organization,
+    currentUserRole: membership.role,
+  }));
 
   return {
     user,

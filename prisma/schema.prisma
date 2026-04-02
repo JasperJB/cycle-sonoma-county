@@ -163,6 +163,8 @@ model User {
   verificationRequests  VerificationRequest[]
   reviewedRequests      VerificationRequest[]    @relation("VerificationReviewedBy")
   memberships           OrganizationMembership[]
+  sentOrganizationInvites OrganizationInvite[]   @relation("OrganizationInviteInvitedBy")
+  acceptedOrganizationInvites OrganizationInvite[] @relation("OrganizationInviteAcceptedBy")
   favorites             Favorite[]
   follows               Follow[]
   reports               Report[]                 @relation("ReportReporter")
@@ -221,6 +223,7 @@ model Organization {
   createdAt           DateTime                 @default(now())
   updatedAt           DateTime                 @updatedAt
   memberships         OrganizationMembership[]
+  invites             OrganizationInvite[]
   shopProfile         ShopProfile?
   clubProfile         ClubProfile?
   rideSeries          RideSeries[]
@@ -247,6 +250,28 @@ model OrganizationMembership {
 
   @@unique([userId, organizationId])
   @@index([organizationId, role])
+}
+
+model OrganizationInvite {
+  id               String                     @id @default(cuid())
+  tokenHash        String
+  email            String
+  organizationId   String
+  invitedByUserId  String
+  acceptedByUserId String?
+  role             OrganizationMembershipRole @default(EDITOR)
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  acceptedAt       DateTime?
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  organization     Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy        User                       @relation("OrganizationInviteInvitedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  acceptedBy       User?                      @relation("OrganizationInviteAcceptedBy", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([tokenHash])
+  @@index([email, acceptedAt, revokedAt, expiresAt])
+  @@index([organizationId, email])
 }
 
 model ShopProfile {

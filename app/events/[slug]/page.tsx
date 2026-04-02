@@ -1,12 +1,12 @@
-import { format } from "date-fns";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FavoriteButton } from "@/components/favorite-button";
 import { FollowButton } from "@/components/follow-button";
-import { ReportForm } from "@/components/forms/report-form";
 import { ListingHero } from "@/components/listing-hero";
 import { PageShell } from "@/components/page-shell";
+import { ReportIssuePanel } from "@/components/report-issue-panel";
 import { getEventBySlug } from "@/lib/data/public";
+import { formatOccurrenceRange, formatOccurrenceStart } from "@/lib/recurrence";
 import { absoluteUrl, buildMetadata, eventJsonLd } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -44,6 +44,8 @@ export default async function EventDetailPage({
     notFound();
   }
 
+  const timezone = event.recurrenceTimezone || undefined;
+
   return (
     <PageShell className="gap-8">
       <script
@@ -66,7 +68,7 @@ export default async function EventDetailPage({
         eyebrow="Event"
         title={event.title}
         summary={event.description || event.summary}
-        location={`${event.city} • ${event.locationName}`}
+        location={`${event.city} - ${event.locationName}`}
         badges={[
           event.eventType.replaceAll("_", " "),
           ...(event.priceText ? [event.priceText] : []),
@@ -79,10 +81,10 @@ export default async function EventDetailPage({
           </>
         }
       />
-      <section className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
+      <section className="grid gap-6 lg:items-start lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
         <div className="surface-card space-y-4 p-6">
           <h2 className="font-heading text-3xl text-[var(--color-pine)]">Event details</h2>
-          <dl className="grid gap-4 text-sm leading-7 text-[var(--color-forest-muted)] sm:grid-cols-2">
+          <dl className="grid gap-4 text-sm leading-7 text-[var(--color-forest-muted)] sm:grid-cols-2 [&_dd]:break-words">
             <div>
               <dt className="font-medium text-[var(--color-pine)]">Organizer</dt>
               <dd>{event.organization.name}</dd>
@@ -93,7 +95,9 @@ export default async function EventDetailPage({
             </div>
             <div>
               <dt className="font-medium text-[var(--color-pine)]">Schedule</dt>
-              <dd>{event.recurrenceSummary || format(event.startsAt, "EEE, MMM d • h:mm a")}</dd>
+              <dd>
+                {event.recurrenceSummary || formatOccurrenceStart(event.startsAt, timezone)}
+              </dd>
             </div>
             <div>
               <dt className="font-medium text-[var(--color-pine)]">Price</dt>
@@ -104,18 +108,17 @@ export default async function EventDetailPage({
             <p className="font-medium text-[var(--color-pine)]">Upcoming occurrences</p>
             <ul className="mt-3 space-y-3 text-sm text-[var(--color-forest-muted)]">
               {event.occurrences.map((occurrence) => (
-                <li key={occurrence.id} className="rounded-[1.1rem] border border-[color:var(--color-border-soft)] bg-white/70 px-4 py-3">
-                  {format(occurrence.startsAt, "EEE, MMM d • h:mm a")} to{" "}
-                  {format(occurrence.endsAt, "h:mm a")}
+                <li
+                  key={occurrence.id}
+                  className="rounded-[1.1rem] border border-[color:var(--color-border-soft)] bg-white/70 px-4 py-3"
+                >
+                  {formatOccurrenceRange(occurrence.startsAt, occurrence.endsAt, timezone)}
                 </li>
               ))}
             </ul>
           </div>
         </div>
-        <div className="surface-card space-y-4 p-6">
-          <h2 className="font-heading text-3xl text-[var(--color-pine)]">Report incorrect info</h2>
-          <ReportForm targetId={event.id} targetType="EVENT" />
-        </div>
+        <ReportIssuePanel targetId={event.id} targetType="EVENT" />
       </section>
     </PageShell>
   );

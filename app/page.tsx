@@ -1,6 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
-import { format } from "date-fns";
 import { ArrowRight, Compass, Flag, MapPinned, TentTree, Users } from "lucide-react";
 import { ContentCard } from "@/components/content-card";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
@@ -8,6 +8,8 @@ import { PageShell, SectionHeading } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getHomePageData } from "@/lib/data/public";
+import { formatOccurrenceStart } from "@/lib/recurrence";
+import ridingHero from "@/public/riding_hero.jpg";
 
 export const revalidate = 3600;
 
@@ -25,13 +27,13 @@ export default async function HomePage() {
   return (
     <PageShell className="gap-12">
       <section className="hero-glow subtle-grid surface-card relative overflow-hidden px-6 py-8 sm:px-10 sm:py-12">
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div className="space-y-6">
             <Badge className="rounded-full bg-[var(--color-pine)] px-4 py-1 text-[0.72rem] uppercase tracking-[0.24em] text-white">
               Trusted local cycling hub
             </Badge>
             <div className="space-y-4">
-              <h1 className="max-w-4xl font-heading text-5xl leading-[0.95] text-[var(--color-pine)] sm:text-6xl">
+              <h1 className="max-w-4xl font-heading text-4xl leading-[0.95] text-[var(--color-pine)] sm:text-5xl lg:text-6xl">
                 Rides, routes, shops, and local cycling knowledge for Sonoma County.
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-[var(--color-forest-muted)]">
@@ -52,20 +54,45 @@ export default async function HomePage() {
               </Button>
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {quickLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="surface-card flex items-center gap-4 rounded-[1.5rem] p-4 hover:border-[color:var(--color-clay)]/40"
-              >
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-pine)] text-white">
-                  <link.icon className="h-5 w-5" />
-                </span>
-                <span className="font-medium text-[var(--color-pine)]">{link.label}</span>
-              </Link>
-            ))}
+          <div className="relative">
+            <div className="absolute -right-6 top-6 hidden h-40 w-40 rounded-full bg-[color:var(--color-clay)]/12 blur-3xl lg:block" />
+            <div className="surface-card relative overflow-hidden p-3 sm:p-4">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] bg-[var(--color-pine)]">
+                <Image
+                  src={ridingHero}
+                  alt="Cyclists riding a coastal road in Sonoma County."
+                  fill
+                  preload
+                  sizes="(max-width: 1024px) 100vw, 42vw"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(24,58,45,0.58)] via-[rgba(24,58,45,0.06)] to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 space-y-2 p-5 text-white sm:p-6">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/78">
+                    Sonoma coast roads
+                  </p>
+                  <p className="max-w-sm font-heading text-2xl leading-tight">
+                    The kind of ride that makes planning around Sonoma worth it.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          {quickLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="surface-card flex items-center gap-4 rounded-[1.5rem] p-4 hover:border-[color:var(--color-clay)]/40"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-pine)] text-white">
+                <link.icon className="h-5 w-5" />
+              </span>
+              <span className="font-medium text-[var(--color-pine)]">{link.label}</span>
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -73,7 +100,7 @@ export default async function HomePage() {
         <div className="space-y-5">
           <SectionHeading
             eyebrow="This week"
-            title="What’s happening in the next seven days"
+            title="What's happening in the next seven days"
             description="A quick read on the next rides and events worth knowing about."
           />
           <div className="grid gap-4">
@@ -91,6 +118,10 @@ export default async function HomePage() {
                   "rideSeries" in item
                     ? item.rideSeries.organization.name
                     : item.eventSeries.organization.name;
+                const timezone =
+                  "rideSeries" in item
+                    ? item.rideSeries.recurrenceTimezone || undefined
+                    : item.eventSeries.recurrenceTimezone || undefined;
 
                 return (
                   <Link
@@ -100,7 +131,7 @@ export default async function HomePage() {
                   >
                     <div className="space-y-2">
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-forest-soft)]">
-                        {format(item.startsAt, "EEE, MMM d • h:mm a")}
+                        {formatOccurrenceStart(item.startsAt, timezone)}
                       </p>
                       <h3 className="font-heading text-2xl text-[var(--color-pine)]">{title}</h3>
                       <p className="text-sm leading-6 text-[var(--color-forest-muted)]">{owner}</p>

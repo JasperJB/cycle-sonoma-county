@@ -1,7 +1,7 @@
-import { format } from "date-fns";
 import { ContentCard, EmptyState } from "@/components/content-card";
 import { PageShell, SectionHeading } from "@/components/page-shell";
 import { getEvents } from "@/lib/data/public";
+import { formatOccurrenceStart } from "@/lib/recurrence";
 
 export const revalidate = 900;
 
@@ -17,21 +17,25 @@ export default async function EventsPage() {
       />
       {events.length ? (
         <div className="grid gap-5 lg:grid-cols-3">
-          {events.map((event) => (
-            <ContentCard
-              key={event.id}
-              href={`/events/${event.slug}`}
-              title={event.title}
-              summary={event.summary}
-              eyebrow={event.organization.name}
-              meta={
-                event.occurrences[0]
-                  ? format(event.occurrences[0].startsAt, "EEE, MMM d • h:mm a")
-                  : format(event.startsAt, "EEE, MMM d • h:mm a")
-              }
-              badges={[event.eventType.replaceAll("_", " "), event.priceText || "Details"]}
-            />
-          ))}
+          {events.map((event) => {
+            const timezone = event.recurrenceTimezone || undefined;
+
+            return (
+              <ContentCard
+                key={event.id}
+                href={`/events/${event.slug}`}
+                title={event.title}
+                summary={event.summary}
+                eyebrow={event.organization.name}
+                meta={
+                  event.occurrences[0]
+                    ? formatOccurrenceStart(event.occurrences[0].startsAt, timezone)
+                    : formatOccurrenceStart(event.startsAt, timezone)
+                }
+                badges={[event.eventType.replaceAll("_", " "), event.priceText || "Details"]}
+              />
+            );
+          })}
         </div>
       ) : (
         <EmptyState

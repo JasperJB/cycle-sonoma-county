@@ -35,13 +35,13 @@ export default async function ExplorePage({
         title="Map-first discovery for rides, routes, clubs, shops, and events"
         description="Use server-side filters to narrow the county, then click between the map and list without losing context."
       />
-      <form className="surface-card grid gap-4 p-5 lg:grid-cols-6">
+      <form className="surface-card grid gap-4 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-6">
         <input
           type="text"
           name="search"
           defaultValue={filters.search}
           placeholder="Search names, cities, disciplines, or organizers"
-          className="h-12 rounded-2xl border border-[color:var(--color-border-soft)] bg-white/85 px-4 text-sm lg:col-span-2"
+          className="h-12 rounded-2xl border border-[color:var(--color-border-soft)] bg-white/85 px-4 text-sm sm:col-span-2 lg:col-span-2"
         />
         <select
           name="dataset"
@@ -68,7 +68,7 @@ export default async function ExplorePage({
         </label>
         <button
           type="submit"
-          className="h-12 rounded-2xl bg-[var(--color-pine)] px-5 text-sm font-semibold text-white"
+          className="h-12 w-full rounded-2xl bg-[var(--color-pine)] px-5 text-sm font-semibold text-white sm:col-span-2 lg:col-span-1"
         >
           Update map
         </button>

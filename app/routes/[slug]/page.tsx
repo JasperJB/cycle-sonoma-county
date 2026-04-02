@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { FavoriteButton } from "@/components/favorite-button";
 import { FollowButton } from "@/components/follow-button";
-import { ReportForm } from "@/components/forms/report-form";
 import { ListingHero } from "@/components/listing-hero";
 import { PageShell } from "@/components/page-shell";
+import { ReportIssuePanel } from "@/components/report-issue-panel";
 import { getRouteBySlug } from "@/lib/data/public";
 
 export default async function RouteDetailPage({
@@ -39,10 +39,10 @@ export default async function RouteDetailPage({
           </>
         }
       />
-      <section className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
+      <section className="grid gap-6 lg:items-start lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
         <div className="surface-card space-y-4 p-6">
           <h2 className="font-heading text-3xl text-[var(--color-pine)]">Route details</h2>
-          <dl className="grid gap-4 text-sm leading-7 text-[var(--color-forest-muted)] sm:grid-cols-2">
+          <dl className="grid gap-4 text-sm leading-7 text-[var(--color-forest-muted)] sm:grid-cols-2 [&_dd]:break-words">
             <div>
               <dt className="font-medium text-[var(--color-pine)]">Best season</dt>
               <dd>{route.bestSeason}</dd>
@@ -67,10 +67,7 @@ export default async function RouteDetailPage({
             </p>
           </div>
         </div>
-        <div className="surface-card space-y-4 p-6">
-          <h2 className="font-heading text-3xl text-[var(--color-pine)]">Report incorrect info</h2>
-          <ReportForm targetId={route.id} targetType="ROUTE" />
-        </div>
+        <ReportIssuePanel targetId={route.id} targetType="ROUTE" />
       </section>
     </PageShell>
   );
