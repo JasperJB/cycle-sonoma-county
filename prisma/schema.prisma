@@ -28,6 +28,7 @@ enum ListingStatus {
 
 enum OrganizationType {
   SHOP
+  BIKE_FRIENDLY_BUSINESS
   CLUB
   TEAM
   ADVOCACY

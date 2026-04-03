@@ -140,7 +140,7 @@ export const rideSeriesSchema = z
     routeUrl: optionalUrl,
     beginnerFriendly: z.boolean().default(false),
     youthFriendly: z.boolean().default(false),
-    recurrenceMode: z.enum(["WEEKLY", "MONTHLY"]),
+    recurrenceMode: z.enum(["CUSTOM", "WEEKLY", "MONTHLY"]),
     recurrenceInterval: z.coerce.number().int().min(1).max(12),
     weekdays: z.array(z.enum(["SU", "MO", "TU", "WE", "TH", "FR", "SA"])).default([]),
     monthlyWeeks: z.array(monthlyWeekSchema).default([]),
@@ -148,8 +148,31 @@ export const rideSeriesSchema = z
       .enum(["SU", "MO", "TU", "WE", "TH", "FR", "SA"])
       .optional(),
     recurrenceUntil: z.string().trim().optional(),
+    customDates: z.array(z.string().trim()).default([]),
   })
   .superRefine((value, context) => {
+    if (value.recurrenceMode === "CUSTOM") {
+      const customDates = value.customDates.filter(Boolean);
+
+      if (!customDates.length) {
+        context.addIssue({
+          code: "custom",
+          path: ["customDates"],
+          message: "Add at least one custom date.",
+        });
+      }
+
+      customDates.forEach((date, index) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+          context.addIssue({
+            code: "custom",
+            path: ["customDates", index],
+            message: "Enter a valid date.",
+          });
+        }
+      });
+    }
+
     if (value.recurrenceMode === "WEEKLY" && !value.weekdays.length) {
       context.addIssue({
         code: "custom",
@@ -175,6 +198,7 @@ export const rideSeriesSchema = z
     }
   });
 export type RideSeriesInput = z.infer<typeof rideSeriesSchema>;
+export type RideSeriesFormInput = z.input<typeof rideSeriesSchema>;
 
 export const eventSeriesSchema = z
   .object({
@@ -196,7 +220,7 @@ export const eventSeriesSchema = z
     registrationUrl: optionalUrl,
     priceText: z.string().trim().max(80).optional(),
     isRecurring: z.boolean().default(false),
-    recurrenceMode: z.enum(["WEEKLY", "MONTHLY"]).optional(),
+    recurrenceMode: z.enum(["CUSTOM", "WEEKLY", "MONTHLY"]).optional(),
     recurrenceInterval: z.coerce.number().int().min(1).max(12).optional(),
     recurrenceUntil: z.string().trim().optional(),
     weekdays: z.array(z.enum(["SU", "MO", "TU", "WE", "TH", "FR", "SA"])).default([]),
@@ -204,10 +228,33 @@ export const eventSeriesSchema = z
     monthlyWeekday: z
       .enum(["SU", "MO", "TU", "WE", "TH", "FR", "SA"])
       .optional(),
+    customDates: z.array(z.string().trim()).default([]),
   })
   .superRefine((value, context) => {
     if (!value.isRecurring) {
       return;
+    }
+
+    if (value.recurrenceMode === "CUSTOM") {
+      const customDates = value.customDates.filter(Boolean);
+
+      if (!customDates.length) {
+        context.addIssue({
+          code: "custom",
+          path: ["customDates"],
+          message: "Add at least one custom date.",
+        });
+      }
+
+      customDates.forEach((date, index) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+          context.addIssue({
+            code: "custom",
+            path: ["customDates", index],
+            message: "Enter a valid date.",
+          });
+        }
+      });
     }
 
     if (value.recurrenceMode === "WEEKLY" && !value.weekdays.length) {
@@ -235,6 +282,7 @@ export const eventSeriesSchema = z
     }
   });
 export type EventSeriesInput = z.infer<typeof eventSeriesSchema>;
+export type EventSeriesFormInput = z.input<typeof eventSeriesSchema>;
 
 export const routeGuideSchema = z.object({
   organizationId: z.string().trim().optional(),

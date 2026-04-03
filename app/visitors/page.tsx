@@ -14,7 +14,7 @@ export default async function VisitorsPage() {
       <SectionHeading
         eyebrow="For Visitors"
         title="Start here if you're visiting"
-        description="A few good routes, shops, rides, and local tips."
+        description="A few good routes, bike-friendly businesses, rides, and local tips."
       />
       <section className="grid gap-5 lg:grid-cols-3">
         {data.routes.map((route) => (
@@ -32,9 +32,9 @@ export default async function VisitorsPage() {
       <section className="grid gap-5 lg:grid-cols-2">
         <div className="surface-card space-y-4 p-6">
           <SectionHeading
-            eyebrow="Rental-friendly shops"
+            eyebrow="Rental-friendly businesses"
             title="Need a rental or quick help?"
-            description="These shops are visitor-friendly."
+            description="These bike-friendly businesses are visitor-friendly."
           />
           <div className="grid gap-3">
             {data.shops.map((shop) => (

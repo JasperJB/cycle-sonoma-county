@@ -15,7 +15,7 @@ export const revalidate = 3600;
 const quickLinks = [
   { href: "/rides", label: "Recurring rides", icon: Flag },
   { href: "/clubs", label: "Clubs and teams", icon: Users },
-  { href: "/shops", label: "Bike shops", icon: Compass },
+  { href: "/shops", label: "Bike-friendly businesses", icon: Compass },
   { href: "/events", label: "Events calendar", icon: TentTree },
   { href: "/routes", label: "Route guides", icon: MapPinned },
 ];
@@ -33,11 +33,11 @@ export default async function HomePage() {
             </Badge>
             <div className="space-y-4">
               <h1 className="max-w-4xl font-heading text-4xl leading-[0.95] text-[var(--color-pine)] sm:text-5xl lg:text-6xl">
-                Find friends, rides, routes, shops, and local cycling knowledge for Sonoma
+                Find friends, rides, routes, bike-friendly businesses, and local cycling knowledge for Sonoma
                 County.
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-[var(--color-forest-muted)]">
-                Find a ride, a route, a shop, or a local event without digging through
+                Find a ride, a route, a helpful local business, or a local event without digging through
                 group chats and scattered posts.
               </p>
             </div>
@@ -123,7 +123,7 @@ export default async function HomePage() {
           <SectionHeading
             eyebrow="Featured"
             title="Good places to start"
-            description="A featured shop, club, and route."
+            description="A featured business, club, and route."
           />
           <div className="grid gap-4">
             {data.featuredShop ? (
@@ -131,7 +131,7 @@ export default async function HomePage() {
                 href={`/shops/${data.featuredShop.slug}`}
                 title={data.featuredShop.name}
                 summary={data.featuredShop.shortDescription}
-                eyebrow="Featured shop"
+                eyebrow={data.featuredShop.type === "SHOP" ? "Featured shop" : "Featured business"}
                 meta={data.featuredShop.city}
                 badges={data.featuredShop.shopProfile?.serviceCategories.slice(0, 3)}
               />
@@ -191,7 +191,7 @@ export default async function HomePage() {
             Organizer CTA
           </p>
           <h3 className="font-heading text-3xl text-[var(--color-pine)]">
-            Run a shop, club, team, or ride series?
+            Run a shop, cafe, brewery, club, team, or ride series?
           </h3>
           <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
             Get verified, publish your listings, and keep ride details current in one place.

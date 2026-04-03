@@ -681,7 +681,8 @@ export default async function OrganizerPage() {
                   <Button asChild variant="outline" className="rounded-2xl px-4">
                     <Link
                       href={
-                        organization.type === "SHOP"
+                        organization.type === "SHOP" ||
+                        organization.type === "BIKE_FRIENDLY_BUSINESS"
                           ? `/shops/${organization.slug}`
                           : `/clubs/${organization.slug}`
                       }

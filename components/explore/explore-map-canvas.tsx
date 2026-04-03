@@ -30,7 +30,7 @@ const datasetMarkerMeta: Record<
   },
   shops: {
     accent: "#8C5A35",
-    iconLabel: "Shop",
+    iconLabel: "Business",
     iconMarkup:
       '<path d="M14 16h20l-2 4H16l-2-4Z" /><path d="M17 20v9h14v-9" /><path d="M22 20v9" /><path d="M27 13v3" />',
   },

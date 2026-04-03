@@ -13,6 +13,7 @@ import { sonomaCities } from "@/lib/site";
 
 const types = [
   "SHOP",
+  "BIKE_FRIENDLY_BUSINESS",
   "CLUB",
   "TEAM",
   "ADVOCACY",

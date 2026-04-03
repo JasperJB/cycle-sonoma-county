@@ -99,6 +99,7 @@ npm run db:prepare
 The seed creates:
 
 - 3 fictional bike shops
+- 1 fictional bike-friendly cafe and beer garden
 - 5 fictional clubs / teams / groups
 - 6 ride series with weekly and monthly recurrence
 - 6 events

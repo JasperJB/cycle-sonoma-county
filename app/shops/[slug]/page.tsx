@@ -10,6 +10,10 @@ import { getShopBySlug } from "@/lib/data/public";
 import { formatOccurrenceStart } from "@/lib/recurrence";
 import { absoluteUrl, buildMetadata, organizationJsonLd } from "@/lib/seo";
 
+function isBikeShop(type: string) {
+  return type === "SHOP";
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -62,7 +66,7 @@ export default async function ShopDetailPage({
         }}
       />
       <ListingHero
-        eyebrow="Bike shop"
+        eyebrow={isBikeShop(shop.type) ? "Bike shop" : "Bike-friendly business"}
         title={shop.name}
         summary={shop.description || shop.shortDescription}
         location={shop.city}
@@ -79,7 +83,7 @@ export default async function ShopDetailPage({
       />
       <section className="grid gap-6 lg:items-start lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
         <div className="surface-card space-y-4 p-6">
-          <h2 className="font-heading text-3xl text-[var(--color-pine)]">Shop details</h2>
+          <h2 className="font-heading text-3xl text-[var(--color-pine)]">Business details</h2>
           <dl className="grid gap-4 text-sm leading-7 text-[var(--color-forest-muted)] sm:grid-cols-2 [&_dd]:break-words">
             <div>
               <dt className="font-medium text-[var(--color-pine)]">Address</dt>
@@ -101,7 +105,7 @@ export default async function ShopDetailPage({
           {shop.shopProfile ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="font-medium text-[var(--color-pine)]">Services</p>
+                <p className="font-medium text-[var(--color-pine)]">Bike-friendly offerings</p>
                 <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
                   {shop.shopProfile.serviceCategories.join(", ")}
                 </p>

@@ -292,6 +292,55 @@ async function main() {
     }),
     prisma.organization.create({
       data: {
+        slug: slug("Spin Cycle Cafe & Beer Garden"),
+        name: "Spin Cycle Cafe & Beer Garden",
+        shortDescription: "A fictional post-ride cafe and beer garden with secure bike parking and repair basics.",
+        description:
+          "Spin Cycle is built for riders who want espresso before the loop, a sandwich after it, and a place to lock up without improvising.",
+        type: OrganizationType.BIKE_FRIENDLY_BUSINESS,
+        listingStatus: ListingStatus.PUBLISHED,
+        verificationStatus: VerificationStatus.APPROVED,
+        city: "Santa Rosa",
+        addressLine1: "55 Depot Square",
+        postalCode: "95401",
+        latitude: 38.4384,
+        longitude: -122.7141,
+        websiteUrl: "https://spin-cycle-cafe.demo",
+        phone: "(707) 555-0194",
+        email: "hello@spin-cycle-cafe.demo",
+        verifiedBadgeLabel: "Verified business",
+        publishedAt: subDays(new Date(), 18),
+        searchDocument: searchDocument([
+          "Spin Cycle Cafe & Beer Garden",
+          "Santa Rosa cafe brewery bike parking espresso sandwiches post-ride",
+        ]),
+        memberships: {
+          create: [{ userId: shopOwner.id, role: OrganizationMembershipRole.OWNER }],
+        },
+        shopProfile: {
+          create: {
+            serviceCategories: ["Cafe", "Beer Garden", "Bike Parking", "Bottle Fill"],
+            brands: ["Sightglass", "North Bay Lager"],
+            hours: {
+              mon: "7a-3p",
+              tue: "7a-3p",
+              wed: "7a-8p",
+              thu: "7a-8p",
+              fri: "7a-9p",
+              sat: "7a-9p",
+              sun: "8a-5p",
+            },
+            offersRentals: false,
+            offersBikeFit: false,
+            offersRepair: false,
+            supportsEBikes: true,
+            rentalDetails: "Floor pump, basic tools, charging outlets, and secure racks available.",
+          },
+        },
+      },
+    }),
+    prisma.organization.create({
+      data: {
         slug: slug("Misty Ridge Cycling Club"),
         name: "Misty Ridge Cycling Club",
         shortDescription: "An all-ages fictional club with steady road rides and social regroup stops.",

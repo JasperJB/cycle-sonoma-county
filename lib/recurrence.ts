@@ -3,6 +3,7 @@ import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { RRule, type ByWeekday, rrulestr } from "rrule";
 
 export const DEFAULT_RECURRENCE_TIMEZONE = "America/Los_Angeles";
+const CUSTOM_RECURRENCE_PREFIX = "CUSTOM";
 
 const weekdayMap = {
   SU: RRule.SU,
@@ -21,7 +22,7 @@ function isRRuleWeekday(
   return typeof weekday === "object" && weekday !== null && "weekday" in weekday;
 }
 
-export type FrequencyMode = "WEEKLY" | "MONTHLY";
+export type FrequencyMode = "CUSTOM" | "WEEKLY" | "MONTHLY";
 export type WeekdayCode = keyof typeof weekdayMap;
 export type MonthlyWeekPosition = 1 | 2 | 3 | 4 | -1;
 export type OverrideType = "CANCELED" | "RESCHEDULED" | "UPDATED";
@@ -36,6 +37,7 @@ export type RecurrenceBuilderInput = {
   monthlyWeeks?: MonthlyWeekPosition[];
   monthlyWeek?: number;
   monthlyWeekday?: WeekdayCode;
+  customDates?: string[];
   until?: string | null;
 };
 
@@ -58,7 +60,38 @@ export function combineZonedDate(date: string, time: string, timezone: string) {
   return fromZonedTime(`${date}T${time}:00`, timezone);
 }
 
+function parseCustomRecurrenceRule(rule: string) {
+  if (!rule.startsWith(`${CUSTOM_RECURRENCE_PREFIX};`)) {
+    return null;
+  }
+
+  const values = new URLSearchParams(rule.slice(`${CUSTOM_RECURRENCE_PREFIX};`.length));
+  const timezone = values.get("tzid") || DEFAULT_RECURRENCE_TIMEZONE;
+  const startTime = values.get("time") || "00:00";
+  const customDates = (values.get("dates") || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return {
+    timezone,
+    startTime,
+    customDates,
+  };
+}
+
 export function buildRecurrenceRule(input: RecurrenceBuilderInput) {
+  if (input.frequency === "CUSTOM") {
+    const customDates = [...new Set(input.customDates?.filter(Boolean) || [])].sort();
+    const values = new URLSearchParams({
+      tzid: input.timezone,
+      time: input.startTime,
+      dates: customDates.join(","),
+    });
+
+    return `${CUSTOM_RECURRENCE_PREFIX};${values.toString()}`;
+  }
+
   const dtstart = combineZonedDate(input.startDate, input.startTime, input.timezone);
   const monthlyWeeks = input.monthlyWeeks?.length
     ? input.monthlyWeeks
@@ -90,6 +123,28 @@ export function buildRecurrenceRule(input: RecurrenceBuilderInput) {
 }
 
 export function recurrenceToText(rule: string) {
+  const customRule = parseCustomRecurrenceRule(rule);
+
+  if (customRule) {
+    if (!customRule.customDates.length) {
+      return "Custom dates";
+    }
+
+    const formattedDates = customRule.customDates.map((date) =>
+      formatInTimeZone(combineZonedDate(date, customRule.startTime, customRule.timezone), customRule.timezone, "MMM d"),
+    );
+
+    if (formattedDates.length === 1) {
+      return `Custom date on ${formattedDates[0]}`;
+    }
+
+    if (formattedDates.length === 2) {
+      return `Custom dates on ${formattedDates[0]} and ${formattedDates[1]}`;
+    }
+
+    return `Custom dates on ${formattedDates[0]}, ${formattedDates[1]}, and ${formattedDates.length - 2} more`;
+  }
+
   const text = rrulestr(rule).toText();
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
@@ -100,9 +155,31 @@ export function parseRecurrenceRule(rule: string): {
   weekdays: WeekdayCode[];
   monthlyWeeks: MonthlyWeekPosition[];
   monthlyWeekday?: WeekdayCode;
+  customDates: string[];
   until?: Date;
   timezone?: string | null;
 } {
+  const customRule = parseCustomRecurrenceRule(rule);
+
+  if (customRule) {
+    return {
+      frequency: "CUSTOM",
+      interval: 1,
+      weekdays: [],
+      monthlyWeeks: [],
+      monthlyWeekday: undefined,
+      customDates: customRule.customDates,
+      until: customRule.customDates.length
+        ? combineZonedDate(
+            customRule.customDates[customRule.customDates.length - 1],
+            customRule.startTime,
+            customRule.timezone,
+          )
+        : undefined,
+      timezone: customRule.timezone,
+    };
+  }
+
   const parsed = rrulestr(rule);
   const frequency = parsed.origOptions.freq === RRule.MONTHLY ? "MONTHLY" : "WEEKLY";
   const byweekday = Array.isArray(parsed.origOptions.byweekday)
@@ -132,6 +209,7 @@ export function parseRecurrenceRule(rule: string): {
       frequency === "MONTHLY" && firstWeekday
         ? rruleWeekdayCodes[firstWeekday.weekday]
         : undefined,
+    customDates: [],
     until: parsed.origOptions.until ?? undefined,
     timezone: parsed.origOptions.tzid,
   };
@@ -144,14 +222,54 @@ export function materializeOccurrences(args: {
   rangeEnd: Date;
   exceptions?: RecurrenceExceptionInput[];
 }) {
-  const rule = rrulestr(args.rule);
-  const matches = rule.between(args.rangeStart, args.rangeEnd, true);
+  const customRule = parseCustomRecurrenceRule(args.rule);
   const exceptionMap = new Map(
     (args.exceptions ?? []).map((exception) => [
       exception.occurrenceAt.toISOString(),
       exception,
     ]),
   );
+
+  if (customRule) {
+    return customRule.customDates
+      .map((date) => combineZonedDate(date, customRule.startTime, customRule.timezone))
+      .filter(
+        (startsAt) =>
+          !isBefore(startsAt, args.rangeStart) && !isAfter(startsAt, args.rangeEnd),
+      )
+      .map<MaterializedOccurrence>((startsAt) => {
+        const exception = exceptionMap.get(startsAt.toISOString());
+        const endsAt = addMinutes(startsAt, args.durationMinutes);
+
+        if (!exception) {
+          return {
+            startsAt,
+            endsAt,
+            status: "SCHEDULED",
+          };
+        }
+
+        if (exception.overrideType === "CANCELED") {
+          return {
+            startsAt,
+            endsAt,
+            status: "CANCELED",
+            note: exception.note,
+          };
+        }
+
+        return {
+          startsAt: exception.newStartsAt ?? startsAt,
+          endsAt: exception.newEndsAt ?? endsAt,
+          status: "RESCHEDULED",
+          note: exception.note,
+        };
+      })
+      .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime());
+  }
+
+  const rule = rrulestr(args.rule);
+  const matches = rule.between(args.rangeStart, args.rangeEnd, true);
 
   return matches
     .map<MaterializedOccurrence | null>((startsAt) => {
@@ -216,7 +334,11 @@ export function defaultArchiveDate(startsAt: Date) {
 }
 
 export function defaultUntilDate(frequency: FrequencyMode, startDate: Date) {
-  return frequency === "MONTHLY" ? addMonths(startDate, 6) : addWeeks(startDate, 12);
+  if (frequency === "MONTHLY") {
+    return addMonths(startDate, 6);
+  }
+
+  return addWeeks(startDate, 12);
 }
 
 export function formatOccurrenceStart(

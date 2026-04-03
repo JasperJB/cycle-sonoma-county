@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useEffect, useTransition } from "react";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
   createEventSeriesAction,
@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { eventSeriesSchema, type EventSeriesInput } from "@/lib/validators";
+import { eventSeriesSchema, type EventSeriesFormInput } from "@/lib/validators";
 
 const weekdays = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"] as const;
 const monthlyWeekOptions = [
@@ -22,11 +22,12 @@ const monthlyWeekOptions = [
   { label: "Fourth", value: 4 },
   { label: "Last", value: -1 },
 ] as const;
+type EventSeriesFormValues = EventSeriesFormInput;
 
 function buildDefaultValues(
   organizations: Array<{ id: string; name: string; type: string }>,
-  initialValues?: Partial<EventSeriesInput>,
-): EventSeriesInput {
+  initialValues?: Partial<EventSeriesFormValues>,
+): EventSeriesFormValues {
   return {
     organizationId: initialValues?.organizationId || organizations[0]?.id || "",
     title: initialValues?.title || "",
@@ -48,6 +49,11 @@ function buildDefaultValues(
     weekdays: initialValues?.weekdays?.length ? initialValues.weekdays : ["SA"],
     monthlyWeeks: initialValues?.monthlyWeeks?.length ? initialValues.monthlyWeeks : [1],
     monthlyWeekday: initialValues?.monthlyWeekday || "SA",
+    customDates: initialValues?.customDates?.length
+      ? initialValues.customDates
+      : initialValues?.startsAtDate
+        ? [initialValues.startsAtDate]
+        : [""],
   };
 }
 
@@ -60,16 +66,20 @@ export function EventSeriesForm({
 }: {
   organizations: Array<{ id: string; name: string; type: string }>;
   eventSeriesId?: string;
-  initialValues?: Partial<EventSeriesInput>;
+  initialValues?: Partial<EventSeriesFormValues>;
   submitLabel?: string;
   redirectTo?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const defaultValues = buildDefaultValues(organizations, initialValues);
-  const form = useForm({
+  const form = useForm<EventSeriesFormValues>({
     resolver: zodResolver(eventSeriesSchema),
     defaultValues,
+  });
+  const { fields: customDateFields, append: appendCustomDate } = useFieldArray({
+    control: form.control,
+    name: "customDates" as never,
   });
   const isRecurring = useWatch({
     control: form.control,
@@ -87,6 +97,27 @@ export function EventSeriesForm({
     control: form.control,
     name: "monthlyWeeks",
   }) || [];
+  const customDates = useWatch({
+    control: form.control,
+    name: "customDates",
+  }) || [];
+  const startsAtDate = useWatch({
+    control: form.control,
+    name: "startsAtDate",
+  });
+  const scheduleType = !isRecurring
+    ? "ONE_OFF"
+    : recurrenceMode === "WEEKLY" || recurrenceMode === "MONTHLY"
+      ? recurrenceMode
+      : "CUSTOM";
+
+  useEffect(() => {
+    if (!isRecurring || recurrenceMode !== "CUSTOM" || customDateFields.length) {
+      return;
+    }
+
+    appendCustomDate(startsAtDate || "");
+  }, [appendCustomDate, customDateFields.length, isRecurring, recurrenceMode, startsAtDate]);
 
   return (
     <form
@@ -94,8 +125,8 @@ export function EventSeriesForm({
       onSubmit={form.handleSubmit((values) =>
         startTransition(async () => {
           const result = eventSeriesId
-            ? await updateEventSeriesAction(eventSeriesId, values as EventSeriesInput)
-            : await createEventSeriesAction(values as EventSeriesInput);
+            ? await updateEventSeriesAction(eventSeriesId, values)
+            : await createEventSeriesAction(values);
 
           if (!result.ok) {
             toast.error(result.message || "Unable to save event.");
@@ -182,10 +213,32 @@ export function EventSeriesForm({
         placeholder="Registration URL"
         className="rounded-2xl bg-white/85"
       />
-      <label className="flex items-center gap-2 text-sm text-[var(--color-pine)]">
-        <input type="checkbox" {...form.register("isRecurring")} />
-        Recurring event series
-      </label>
+      <div className="grid gap-2 sm:max-w-sm">
+        <label className="text-sm font-medium text-[var(--color-pine)]">Schedule</label>
+        <select
+          value={scheduleType}
+          onChange={(event) => {
+            const nextValue = event.target.value as "ONE_OFF" | "CUSTOM" | "WEEKLY" | "MONTHLY";
+
+            if (nextValue === "ONE_OFF") {
+              form.setValue("isRecurring", false);
+              return;
+            }
+
+            form.setValue("isRecurring", true);
+            form.setValue("recurrenceMode", nextValue);
+          }}
+          className="h-11 rounded-2xl border border-[color:var(--color-border-soft)] bg-white/85 px-4 text-sm"
+        >
+          <option value="ONE_OFF">One-off</option>
+          <option value="CUSTOM">Custom dates</option>
+          <option value="WEEKLY">Weekly</option>
+          <option value="MONTHLY">Monthly</option>
+        </select>
+        <p className="text-xs text-[var(--color-forest-muted)]">
+          Use custom dates for race series that run on a fixed set of calendar dates.
+        </p>
+      </div>
       {isRecurring ? (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -193,29 +246,78 @@ export function EventSeriesForm({
               {...form.register("recurrenceMode")}
               className="h-11 rounded-2xl border border-[color:var(--color-border-soft)] bg-white/85 px-4 text-sm"
             >
+              <option value="CUSTOM">Custom</option>
               <option value="WEEKLY">Weekly</option>
               <option value="MONTHLY">Monthly</option>
             </select>
-            <div className="grid gap-1">
-              <Input
-                type="number"
-                {...form.register("recurrenceInterval")}
-                placeholder="Interval"
-                className="rounded-2xl bg-white/85"
-              />
-              <p className="text-xs text-[var(--color-forest-muted)]">
-                {recurrenceMode === "WEEKLY"
-                  ? "Use 2 for every other week."
-                  : "Use 2 for every other month."}
-              </p>
-            </div>
-            <Input
-              type="date"
-              {...form.register("recurrenceUntil")}
-              className="rounded-2xl bg-white/85"
-            />
+            {recurrenceMode !== "CUSTOM" ? (
+              <>
+                <div className="grid gap-1">
+                  <Input
+                    type="number"
+                    {...form.register("recurrenceInterval")}
+                    placeholder="Interval"
+                    className="rounded-2xl bg-white/85"
+                  />
+                  <p className="text-xs text-[var(--color-forest-muted)]">
+                    {recurrenceMode === "WEEKLY"
+                      ? "Use 2 for every other week."
+                      : "Use 2 for every other month."}
+                  </p>
+                </div>
+                <Input
+                  type="date"
+                  {...form.register("recurrenceUntil")}
+                  className="rounded-2xl bg-white/85"
+                />
+              </>
+            ) : null}
           </div>
-          {recurrenceMode === "WEEKLY" ? (
+          {recurrenceMode === "CUSTOM" ? (
+            <div className="grid gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-sm font-medium text-[var(--color-pine)]">Dates</label>
+                <div className="flex flex-wrap gap-2">
+                  {customDateFields.length < 8 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => {
+                        const seedValue = customDates[customDates.length - 1] || startsAtDate || "";
+
+                        for (let index = customDateFields.length; index < 8; index += 1) {
+                          appendCustomDate(seedValue);
+                        }
+                      }}
+                    >
+                      Add to 8 dates
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-2xl"
+                    onClick={() =>
+                      appendCustomDate(customDates[customDates.length - 1] || startsAtDate || "")
+                    }
+                  >
+                    Add date
+                  </Button>
+                </div>
+              </div>
+              <div className="grid gap-3">
+                {customDateFields.map((field, index) => (
+                  <Input
+                    key={field.id}
+                    type="date"
+                    {...form.register(`customDates.${index}`)}
+                    className="rounded-2xl bg-white/85"
+                  />
+                ))}
+              </div>
+            </div>
+          ) : recurrenceMode === "WEEKLY" ? (
             <div className="grid gap-3">
               <label className="text-sm font-medium text-[var(--color-pine)]">Days of week</label>
               <div className="flex flex-wrap gap-2">

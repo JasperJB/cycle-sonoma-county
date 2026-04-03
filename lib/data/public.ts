@@ -19,6 +19,8 @@ const activeSponsorWhere = {
   AND: [{ OR: [{ activeTo: null }, { activeTo: { gte: new Date() } }] }],
 };
 
+const shopOrganizationTypes = [OrganizationType.SHOP, OrganizationType.BIKE_FRIENDLY_BUSINESS];
+
 async function safeQuery<T>(query: () => Promise<T>, fallback: T): Promise<T> {
   try {
     return await query();
@@ -74,7 +76,9 @@ export async function getHomePageData() {
           prisma.organization.findMany({
             where: {
               ...publishedOrgWhere,
-              type: OrganizationType.SHOP,
+              type: {
+                in: shopOrganizationTypes,
+              },
             },
             include: { shopProfile: true },
             take: 3,
@@ -177,7 +181,9 @@ export async function getShops(filters?: ExploreFilters) {
       prisma.organization.findMany({
         where: {
           ...publishedOrgWhere,
-          type: OrganizationType.SHOP,
+          type: {
+            in: shopOrganizationTypes,
+          },
           city: filters?.city || undefined,
           verificationStatus: filters?.verifiedOnly
             ? VerificationStatus.APPROVED
@@ -457,7 +463,9 @@ export async function getShopBySlug(slug: string) {
         where: {
           slug,
           ...publishedOrgWhere,
-          type: OrganizationType.SHOP,
+          type: {
+            in: shopOrganizationTypes,
+          },
         },
         include: {
           shopProfile: true,
@@ -617,7 +625,9 @@ export async function getVisitorPageData() {
         prisma.organization.findMany({
           where: {
             ...publishedOrgWhere,
-            type: OrganizationType.SHOP,
+            type: {
+              in: shopOrganizationTypes,
+            },
             shopProfile: {
               offersRentals: true,
             },

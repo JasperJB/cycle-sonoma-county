@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useEffect, useTransition } from "react";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
   createRideSeriesAction,
@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { rideSeriesSchema, type RideSeriesInput } from "@/lib/validators";
+import { rideSeriesSchema, type RideSeriesFormInput } from "@/lib/validators";
 
 const weekdays = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"] as const;
 const monthlyWeekOptions = [
@@ -22,11 +22,12 @@ const monthlyWeekOptions = [
   { label: "Fourth", value: 4 },
   { label: "Last", value: -1 },
 ] as const;
+type RideSeriesFormValues = RideSeriesFormInput;
 
 function buildDefaultValues(
   organizations: Array<{ id: string; name: string; type: string }>,
-  initialValues?: Partial<RideSeriesInput>,
-): RideSeriesInput {
+  initialValues?: Partial<RideSeriesFormValues>,
+): RideSeriesFormValues {
   return {
     organizationId: initialValues?.organizationId || organizations[0]?.id || "",
     title: initialValues?.title || "",
@@ -51,6 +52,11 @@ function buildDefaultValues(
     monthlyWeeks: initialValues?.monthlyWeeks?.length ? initialValues.monthlyWeeks : [1],
     monthlyWeekday: initialValues?.monthlyWeekday || "SA",
     recurrenceUntil: initialValues?.recurrenceUntil || "",
+    customDates: initialValues?.customDates?.length
+      ? initialValues.customDates
+      : initialValues?.startDate
+        ? [initialValues.startDate]
+        : [""],
   };
 }
 
@@ -63,16 +69,20 @@ export function RideSeriesForm({
 }: {
   organizations: Array<{ id: string; name: string; type: string }>;
   rideSeriesId?: string;
-  initialValues?: Partial<RideSeriesInput>;
+  initialValues?: Partial<RideSeriesFormValues>;
   submitLabel?: string;
   redirectTo?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const defaultValues = buildDefaultValues(organizations, initialValues);
-  const form = useForm({
+  const form = useForm<RideSeriesFormValues>({
     resolver: zodResolver(rideSeriesSchema),
     defaultValues,
+  });
+  const { fields: customDateFields, append: appendCustomDate } = useFieldArray({
+    control: form.control,
+    name: "customDates" as never,
   });
 
   const selectedWeekdays = useWatch({
@@ -87,6 +97,22 @@ export function RideSeriesForm({
     control: form.control,
     name: "monthlyWeeks",
   }) || [];
+  const customDates = useWatch({
+    control: form.control,
+    name: "customDates",
+  }) || [];
+  const startDate = useWatch({
+    control: form.control,
+    name: "startDate",
+  });
+
+  useEffect(() => {
+    if (recurrenceMode !== "CUSTOM" || customDateFields.length) {
+      return;
+    }
+
+    appendCustomDate(startDate || "");
+  }, [appendCustomDate, customDateFields.length, recurrenceMode, startDate]);
 
   return (
     <form
@@ -94,8 +120,8 @@ export function RideSeriesForm({
       onSubmit={form.handleSubmit((values) =>
         startTransition(async () => {
           const result = rideSeriesId
-            ? await updateRideSeriesAction(rideSeriesId, values as RideSeriesInput)
-            : await createRideSeriesAction(values as RideSeriesInput);
+            ? await updateRideSeriesAction(rideSeriesId, values)
+            : await createRideSeriesAction(values);
 
           if (!result.ok) {
             toast.error(result.message || "Unable to save ride.");
@@ -232,33 +258,62 @@ export function RideSeriesForm({
             {...form.register("recurrenceMode")}
             className="h-11 rounded-2xl border border-[color:var(--color-border-soft)] bg-white/85 px-4 text-sm"
           >
+            <option value="CUSTOM">Custom</option>
             <option value="WEEKLY">Weekly</option>
             <option value="MONTHLY">Monthly</option>
           </select>
         </div>
-        <div className="grid gap-2">
-          <label className="text-sm font-medium text-[var(--color-pine)]">Interval</label>
-          <Input
-            type="number"
-            {...form.register("recurrenceInterval")}
-            className="rounded-2xl bg-white/85"
-          />
-          <p className="text-xs text-[var(--color-forest-muted)]">
-            {recurrenceMode === "WEEKLY"
-              ? "Use 2 for every other week."
-              : "Use 2 for every other month."}
-          </p>
-        </div>
-        <div className="grid gap-2">
-          <label className="text-sm font-medium text-[var(--color-pine)]">Ends on</label>
-          <Input
-            type="date"
-            {...form.register("recurrenceUntil")}
-            className="rounded-2xl bg-white/85"
-          />
-        </div>
+        {recurrenceMode !== "CUSTOM" ? (
+          <>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-[var(--color-pine)]">Interval</label>
+              <Input
+                type="number"
+                {...form.register("recurrenceInterval")}
+                className="rounded-2xl bg-white/85"
+              />
+              <p className="text-xs text-[var(--color-forest-muted)]">
+                {recurrenceMode === "WEEKLY"
+                  ? "Use 2 for every other week."
+                  : "Use 2 for every other month."}
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-[var(--color-pine)]">Ends on</label>
+              <Input
+                type="date"
+                {...form.register("recurrenceUntil")}
+                className="rounded-2xl bg-white/85"
+              />
+            </div>
+          </>
+        ) : null}
       </div>
-      {recurrenceMode === "WEEKLY" ? (
+      {recurrenceMode === "CUSTOM" ? (
+        <div className="grid gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <label className="text-sm font-medium text-[var(--color-pine)]">Dates</label>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-2xl"
+              onClick={() => appendCustomDate(customDates[customDates.length - 1] || startDate || "")}
+            >
+              Add date
+            </Button>
+          </div>
+          <div className="grid gap-3">
+            {customDateFields.map((field, index) => (
+              <Input
+                key={field.id}
+                type="date"
+                {...form.register(`customDates.${index}`)}
+                className="rounded-2xl bg-white/85"
+              />
+            ))}
+          </div>
+        </div>
+      ) : recurrenceMode === "WEEKLY" ? (
         <div className="grid gap-3">
           <label className="text-sm font-medium text-[var(--color-pine)]">Days of week</label>
           <div className="flex flex-wrap gap-2">

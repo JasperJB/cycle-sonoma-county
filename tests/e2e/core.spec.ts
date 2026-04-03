@@ -2,9 +2,9 @@ import { expect, test } from "@playwright/test";
 
 test("public home and explore pages render", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /rides, routes, shops/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /rides, routes, bike-friendly businesses/i })).toBeVisible();
   await page.goto("/explore");
-  await expect(page.getByRole("heading", { name: /find rides, routes, clubs, shops, and events/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /find friends, rides, routes, clubs, businesses, and events/i })).toBeVisible();
 });
 
 test("development auth can reach the account page", async ({ page }) => {

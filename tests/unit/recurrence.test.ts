@@ -128,6 +128,31 @@ describe("recurrence engine", () => {
     expect(parsed.monthlyWeekday).toBe("WE");
   });
 
+  it("supports explicit custom dates and parses them back", () => {
+    const rule = buildRecurrenceRule({
+      frequency: "CUSTOM",
+      timezone: "America/Los_Angeles",
+      startDate: "2026-04-01",
+      startTime: "08:00",
+      customDates: ["2026-04-03", "2026-04-17", "2026-05-01"],
+    });
+
+    const occurrences = materializeOccurrences({
+      rule,
+      durationMinutes: 90,
+      rangeStart: new Date("2026-04-01T00:00:00.000Z"),
+      rangeEnd: new Date("2026-04-30T23:59:59.000Z"),
+    });
+    const parsed = parseRecurrenceRule(rule);
+
+    expect(occurrences).toHaveLength(2);
+    expect(occurrences[0].startsAt.toISOString()).toContain("2026-04-03");
+    expect(occurrences[1].startsAt.toISOString()).toContain("2026-04-17");
+    expect(parsed.frequency).toBe("CUSTOM");
+    expect(parsed.customDates).toEqual(["2026-04-03", "2026-04-17", "2026-05-01"]);
+    expect(recurrenceToText(rule)).toContain("Custom dates");
+  });
+
   it("applies cancellations and reschedules", () => {
     const rule = buildRecurrenceRule({
       frequency: "WEEKLY",

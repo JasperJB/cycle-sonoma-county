@@ -54,7 +54,9 @@ function searchDocument(parts: Array<string | undefined>) {
 }
 
 function organizationPublicPath(type: OrganizationType, slug: string) {
-  return type === OrganizationType.SHOP ? `/shops/${slug}` : `/clubs/${slug}`;
+  return type === OrganizationType.SHOP || type === OrganizationType.BIKE_FRIENDLY_BUSINESS
+    ? `/shops/${slug}`
+    : `/clubs/${slug}`;
 }
 
 function ridePublicPath(slug: string) {
@@ -81,10 +83,31 @@ function revalidateGlobalPaths() {
   revalidatePath("/visitors");
 }
 
+function normalizeRideCustomDates(input: { recurrenceMode: "CUSTOM" | "WEEKLY" | "MONTHLY"; customDates: string[] }) {
+  if (input.recurrenceMode !== "CUSTOM") {
+    return [];
+  }
+
+  return [...new Set(input.customDates.filter(Boolean))].sort();
+}
+
+function normalizeEventCustomDates(input: {
+  isRecurring: boolean;
+  recurrenceMode?: "CUSTOM" | "WEEKLY" | "MONTHLY";
+  customDates: string[];
+}) {
+  if (!input.isRecurring || input.recurrenceMode !== "CUSTOM") {
+    return [];
+  }
+
+  return [...new Set(input.customDates.filter(Boolean))].sort();
+}
+
 export async function createVerificationRequestAction(input: {
   organizationName: string;
   organizationType:
     | "SHOP"
+    | "BIKE_FRIENDLY_BUSINESS"
     | "CLUB"
     | "TEAM"
     | "ADVOCACY"
@@ -205,6 +228,7 @@ export async function rejectVerificationRequestAction(
 export async function createOrganizationAction(input: {
   organizationType:
     | "SHOP"
+    | "BIKE_FRIENDLY_BUSINESS"
     | "CLUB"
     | "TEAM"
     | "ADVOCACY"
@@ -704,15 +728,20 @@ export async function createRideSeriesAction(input: Parameters<typeof rideSeries
     return { ok: false, message: "You cannot manage that organization." };
   }
 
+  const customDates = normalizeRideCustomDates(parsed.data);
+  const effectiveStartDate =
+    parsed.data.recurrenceMode === "CUSTOM" ? customDates[0] : parsed.data.startDate;
+
   const recurrenceRule = buildRecurrenceRule({
     frequency: parsed.data.recurrenceMode,
     timezone: "America/Los_Angeles",
-    startDate: parsed.data.startDate,
+    startDate: effectiveStartDate,
     startTime: parsed.data.startTimeLocal,
     interval: parsed.data.recurrenceInterval,
     weekdays: parsed.data.weekdays,
     monthlyWeeks: parsed.data.monthlyWeeks,
     monthlyWeekday: parsed.data.monthlyWeekday,
+    customDates,
     until: parsed.data.recurrenceUntil,
   });
 
@@ -749,7 +778,7 @@ export async function createRideSeriesAction(input: Parameters<typeof rideSeries
       latitude: location.latitude,
       longitude: location.longitude,
       startDate: combineZonedDate(
-        parsed.data.startDate,
+        effectiveStartDate,
         parsed.data.startTimeLocal,
         "America/Los_Angeles",
       ),
@@ -761,13 +790,22 @@ export async function createRideSeriesAction(input: Parameters<typeof rideSeries
       recurrenceRule,
       recurrenceSummary: recurrenceToText(recurrenceRule),
       recurrenceTimezone: "America/Los_Angeles",
-      recurrenceEndsAt: parsed.data.recurrenceUntil
-        ? combineZonedDate(
-            parsed.data.recurrenceUntil,
-            parsed.data.startTimeLocal,
-            "America/Los_Angeles",
-          )
-        : null,
+      recurrenceEndsAt:
+        parsed.data.recurrenceMode === "CUSTOM"
+          ? customDates.length
+            ? combineZonedDate(
+                customDates[customDates.length - 1],
+                parsed.data.startTimeLocal,
+                "America/Los_Angeles",
+              )
+            : null
+          : parsed.data.recurrenceUntil
+            ? combineZonedDate(
+                parsed.data.recurrenceUntil,
+                parsed.data.startTimeLocal,
+                "America/Los_Angeles",
+              )
+            : null,
       searchDocument: searchDocument([
         parsed.data.title,
         parsed.data.summary,
@@ -847,15 +885,20 @@ export async function updateRideSeriesAction(
     return { ok: false, message: "You cannot manage that ride series." };
   }
 
+  const customDates = normalizeRideCustomDates(parsed.data);
+  const effectiveStartDate =
+    parsed.data.recurrenceMode === "CUSTOM" ? customDates[0] : parsed.data.startDate;
+
   const recurrenceRule = buildRecurrenceRule({
     frequency: parsed.data.recurrenceMode,
     timezone: "America/Los_Angeles",
-    startDate: parsed.data.startDate,
+    startDate: effectiveStartDate,
     startTime: parsed.data.startTimeLocal,
     interval: parsed.data.recurrenceInterval,
     weekdays: parsed.data.weekdays,
     monthlyWeeks: parsed.data.monthlyWeeks,
     monthlyWeekday: parsed.data.monthlyWeekday,
+    customDates,
     until: parsed.data.recurrenceUntil,
   });
 
@@ -908,7 +951,7 @@ export async function updateRideSeriesAction(
         latitude: location.latitude,
         longitude: location.longitude,
         startDate: combineZonedDate(
-          parsed.data.startDate,
+          effectiveStartDate,
           parsed.data.startTimeLocal,
           "America/Los_Angeles",
         ),
@@ -920,13 +963,22 @@ export async function updateRideSeriesAction(
         recurrenceRule,
         recurrenceSummary: recurrenceToText(recurrenceRule),
         recurrenceTimezone: "America/Los_Angeles",
-        recurrenceEndsAt: parsed.data.recurrenceUntil
-          ? combineZonedDate(
-              parsed.data.recurrenceUntil,
-              parsed.data.startTimeLocal,
-              "America/Los_Angeles",
-            )
-          : null,
+        recurrenceEndsAt:
+          parsed.data.recurrenceMode === "CUSTOM"
+            ? customDates.length
+              ? combineZonedDate(
+                  customDates[customDates.length - 1],
+                  parsed.data.startTimeLocal,
+                  "America/Los_Angeles",
+                )
+              : null
+            : parsed.data.recurrenceUntil
+              ? combineZonedDate(
+                  parsed.data.recurrenceUntil,
+                  parsed.data.startTimeLocal,
+                  "America/Los_Angeles",
+                )
+              : null,
         searchDocument: searchDocument([
           parsed.data.title,
           parsed.data.summary,
@@ -1091,18 +1143,29 @@ export async function createEventSeriesAction(
     parsed.data.startsAtTime,
     "America/Los_Angeles",
   );
-  const endsAt = addMinutes(startsAt, parsed.data.durationMinutes);
+  const customDates = normalizeEventCustomDates(parsed.data);
+  const effectiveStartDate =
+    parsed.data.isRecurring && parsed.data.recurrenceMode === "CUSTOM"
+      ? customDates[0]
+      : parsed.data.startsAtDate;
+  const effectiveStartsAt = combineZonedDate(
+    effectiveStartDate,
+    parsed.data.startsAtTime,
+    "America/Los_Angeles",
+  );
+  const endsAt = addMinutes(effectiveStartsAt, parsed.data.durationMinutes);
   const recurrenceRule =
     parsed.data.isRecurring && parsed.data.recurrenceMode
       ? buildRecurrenceRule({
           frequency: parsed.data.recurrenceMode,
           timezone: "America/Los_Angeles",
-          startDate: parsed.data.startsAtDate,
+          startDate: effectiveStartDate,
           startTime: parsed.data.startsAtTime,
           interval: parsed.data.recurrenceInterval || 1,
           weekdays: parsed.data.weekdays,
           monthlyWeeks: parsed.data.monthlyWeeks,
           monthlyWeekday: parsed.data.monthlyWeekday,
+          customDates,
           until: parsed.data.recurrenceUntil,
         })
       : undefined;
@@ -1131,7 +1194,7 @@ export async function createEventSeriesAction(
       description: parsed.data.description,
       city: location.city,
       eventType: parsed.data.eventType,
-      startsAt,
+      startsAt: effectiveStartsAt,
       endsAt,
       locationName: parsed.data.locationName,
       locationAddress: location.addressLine1,
@@ -1144,12 +1207,22 @@ export async function createEventSeriesAction(
       recurrenceSummary: recurrenceRule ? recurrenceToText(recurrenceRule) : null,
       recurrenceTimezone: "America/Los_Angeles",
       recurrenceEndsAt:
-        recurrenceRule && parsed.data.recurrenceUntil
-          ? combineZonedDate(
-              parsed.data.recurrenceUntil,
-              parsed.data.startsAtTime,
-              "America/Los_Angeles",
-            )
+        recurrenceRule
+          ? parsed.data.recurrenceMode === "CUSTOM"
+            ? customDates.length
+              ? combineZonedDate(
+                  customDates[customDates.length - 1],
+                  parsed.data.startsAtTime,
+                  "America/Los_Angeles",
+                )
+              : null
+            : parsed.data.recurrenceUntil
+              ? combineZonedDate(
+                  parsed.data.recurrenceUntil,
+                  parsed.data.startsAtTime,
+                  "America/Los_Angeles",
+                )
+              : null
           : null,
       searchDocument: searchDocument([
         parsed.data.title,
@@ -1168,7 +1241,7 @@ export async function createEventSeriesAction(
         rule: recurrenceRule,
         durationMinutes: Math.max(
           30,
-          Math.round((endsAt.getTime() - startsAt.getTime()) / 60000),
+          Math.round((endsAt.getTime() - effectiveStartsAt.getTime()) / 60000),
         ),
         rangeStart: window.from,
         rangeEnd: window.to,
@@ -1240,18 +1313,29 @@ export async function updateEventSeriesAction(
     parsed.data.startsAtTime,
     "America/Los_Angeles",
   );
-  const endsAt = addMinutes(startsAt, parsed.data.durationMinutes);
+  const customDates = normalizeEventCustomDates(parsed.data);
+  const effectiveStartDate =
+    parsed.data.isRecurring && parsed.data.recurrenceMode === "CUSTOM"
+      ? customDates[0]
+      : parsed.data.startsAtDate;
+  const effectiveStartsAt = combineZonedDate(
+    effectiveStartDate,
+    parsed.data.startsAtTime,
+    "America/Los_Angeles",
+  );
+  const endsAt = addMinutes(effectiveStartsAt, parsed.data.durationMinutes);
   const recurrenceRule =
     parsed.data.isRecurring && parsed.data.recurrenceMode
       ? buildRecurrenceRule({
           frequency: parsed.data.recurrenceMode,
           timezone: "America/Los_Angeles",
-          startDate: parsed.data.startsAtDate,
+          startDate: effectiveStartDate,
           startTime: parsed.data.startsAtTime,
           interval: parsed.data.recurrenceInterval || 1,
           weekdays: parsed.data.weekdays,
           monthlyWeeks: parsed.data.monthlyWeeks,
           monthlyWeekday: parsed.data.monthlyWeekday,
+          customDates,
           until: parsed.data.recurrenceUntil,
         })
       : undefined;
@@ -1283,7 +1367,7 @@ export async function updateEventSeriesAction(
         rule: recurrenceRule,
         durationMinutes: Math.max(
           30,
-          Math.round((endsAt.getTime() - startsAt.getTime()) / 60000),
+          Math.round((endsAt.getTime() - effectiveStartsAt.getTime()) / 60000),
         ),
         rangeStart: window.from,
         rangeEnd: window.to,
@@ -1301,7 +1385,7 @@ export async function updateEventSeriesAction(
         description: parsed.data.description,
         city: location.city,
         eventType: parsed.data.eventType,
-        startsAt,
+        startsAt: effectiveStartsAt,
         endsAt,
         locationName: parsed.data.locationName,
         locationAddress: location.addressLine1,
@@ -1314,12 +1398,22 @@ export async function updateEventSeriesAction(
         recurrenceSummary: recurrenceRule ? recurrenceToText(recurrenceRule) : null,
         recurrenceTimezone: "America/Los_Angeles",
         recurrenceEndsAt:
-          recurrenceRule && parsed.data.recurrenceUntil
-            ? combineZonedDate(
-                parsed.data.recurrenceUntil,
-                parsed.data.startsAtTime,
-                "America/Los_Angeles",
-              )
+          recurrenceRule
+            ? parsed.data.recurrenceMode === "CUSTOM"
+              ? customDates.length
+                ? combineZonedDate(
+                    customDates[customDates.length - 1],
+                    parsed.data.startsAtTime,
+                    "America/Los_Angeles",
+                  )
+                : null
+              : parsed.data.recurrenceUntil
+                ? combineZonedDate(
+                    parsed.data.recurrenceUntil,
+                    parsed.data.startsAtTime,
+                    "America/Los_Angeles",
+                  )
+                : null
             : null,
         searchDocument: searchDocument([
           parsed.data.title,

@@ -42,6 +42,7 @@ export default async function EditEventSeriesPage({
 
   const organizations = await getOrganizationOptionsForUser(user.id);
   const recurrence = event.recurrenceRule ? parseRecurrenceRule(event.recurrenceRule) : null;
+  const customStartDate = recurrence?.customDates[0];
 
   return (
     <PageShell className="gap-8">
@@ -66,7 +67,9 @@ export default async function EditEventSeriesPage({
             description: event.description || "",
             city: event.city,
             eventType: event.eventType,
-            startsAtDate: formatInTimeZone(event.startsAt, "America/Los_Angeles", "yyyy-MM-dd"),
+            startsAtDate:
+              customStartDate ||
+              formatInTimeZone(event.startsAt, "America/Los_Angeles", "yyyy-MM-dd"),
             startsAtTime: formatInTimeZone(event.startsAt, "America/Los_Angeles", "HH:mm"),
             durationMinutes: Math.max(
               30,
@@ -85,6 +88,7 @@ export default async function EditEventSeriesPage({
             weekdays: recurrence?.weekdays,
             monthlyWeeks: recurrence?.monthlyWeeks,
             monthlyWeekday: recurrence?.monthlyWeekday,
+            customDates: recurrence?.customDates,
           }}
           submitLabel="Save event changes"
           redirectTo="/organizer"

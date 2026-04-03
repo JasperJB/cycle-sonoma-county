@@ -42,6 +42,7 @@ export default async function EditRideSeriesPage({
 
   const organizations = await getOrganizationOptionsForUser(user.id);
   const recurrence = parseRecurrenceRule(ride.recurrenceRule);
+  const customStartDate = recurrence.customDates[0];
 
   return (
     <PageShell className="gap-8">
@@ -71,7 +72,8 @@ export default async function EditRideSeriesPage({
             skillLevel: ride.skillLevel || "",
             meetingLocationName: ride.meetingLocationName,
             meetingAddress: ride.meetingAddress || "",
-            startDate: formatInTimeZone(ride.startDate, "America/Los_Angeles", "yyyy-MM-dd"),
+            startDate:
+              customStartDate || formatInTimeZone(ride.startDate, "America/Los_Angeles", "yyyy-MM-dd"),
             startTimeLocal: ride.startTimeLocal,
             estimatedDurationMinutes: ride.estimatedDurationMinutes,
             routeUrl: ride.routeUrl || "",
@@ -82,6 +84,7 @@ export default async function EditRideSeriesPage({
             weekdays: recurrence.weekdays,
             monthlyWeeks: recurrence.monthlyWeeks,
             monthlyWeekday: recurrence.monthlyWeekday,
+            customDates: recurrence.customDates,
             recurrenceUntil: recurrence.until
               ? formatInTimeZone(recurrence.until, "America/Los_Angeles", "yyyy-MM-dd")
               : "",

@@ -32,7 +32,7 @@ export default async function ExplorePage({
     <PageShell className="gap-8">
       <SectionHeading
         eyebrow="Explore"
-        title="Find friends, rides, routes, clubs, shops, and events"
+        title="Find friends, rides, routes, clubs, businesses, and events"
         description="Filter the map and browse what's happening around the county."
       />
       <form className="surface-card grid gap-4 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-6">
@@ -49,7 +49,7 @@ export default async function ExplorePage({
           className="h-12 rounded-2xl border border-[color:var(--color-border-soft)] bg-white/85 px-4 text-sm"
         >
           <option value="all">All listings</option>
-          <option value="shops">Shops</option>
+          <option value="shops">Businesses</option>
           <option value="clubs">Clubs</option>
           <option value="rides">Rides</option>
           <option value="events">Events</option>

@@ -10,9 +10,9 @@ export default async function ShopsPage() {
   return (
     <PageShell className="gap-8">
       <SectionHeading
-        eyebrow="Shops"
-        title="Local bike shops"
-        description="Repairs, rentals, fittings, and the shops that keep people riding."
+        eyebrow="Businesses"
+        title="Bike-friendly businesses"
+        description="Bike shops, cafes, breweries, and other local stops that make riding better."
       />
       {shops.length ? (
         <div className="grid gap-5 lg:grid-cols-3">
@@ -34,8 +34,8 @@ export default async function ShopsPage() {
         </div>
       ) : (
         <EmptyState
-          title="No shops are published yet"
-          description="Shop listings will show up here."
+          title="No bike-friendly businesses are published yet"
+          description="Bike shops and other rider-friendly businesses will show up here."
         />
       )}
     </PageShell>

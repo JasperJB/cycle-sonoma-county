@@ -44,7 +44,7 @@ export default async function AccountPage() {
           </p>
           <h2 className="mt-3 font-heading text-3xl text-[var(--color-pine)]">{user.favorites.length}</h2>
           <p className="mt-2 text-sm leading-7 text-[var(--color-forest-muted)]">
-            Favorites across rides, events, routes, clubs, and shops.
+            Favorites across rides, events, routes, clubs, and bike-friendly businesses.
           </p>
         </div>
         <div className="surface-card p-6">
@@ -101,7 +101,7 @@ export default async function AccountPage() {
             <>
               <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
                 You are currently a member account. Apply for organizer verification if you
-                run a shop, club, team, promoter, or community ride.
+                run a shop, cafe, brewery, club, promoter, or community ride.
               </p>
               <Button asChild className="rounded-2xl px-5">
                 <Link href="/become-organizer">Apply for verification</Link>
@@ -116,7 +116,8 @@ export default async function AccountPage() {
               <Link
                 key={follow.id}
                 href={
-                  follow.organization.type === "SHOP"
+                  follow.organization.type === "SHOP" ||
+                  follow.organization.type === "BIKE_FRIENDLY_BUSINESS"
                     ? `/shops/${follow.organization.slug}`
                     : `/clubs/${follow.organization.slug}`
                 }
