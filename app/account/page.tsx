@@ -44,7 +44,7 @@ export default async function AccountPage() {
           </p>
           <h2 className="mt-3 font-heading text-3xl text-[var(--color-pine)]">{user.favorites.length}</h2>
           <p className="mt-2 text-sm leading-7 text-[var(--color-forest-muted)]">
-            Favorites across rides, events, routes, clubs, and bike-friendly businesses.
+            Favorites across rides, events, routes, clubs, and shops and services.
           </p>
         </div>
         <div className="surface-card p-6">

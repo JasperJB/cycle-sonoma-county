@@ -1,6 +1,7 @@
 import { ExploreExperience } from "@/components/explore/explore-experience";
 import { PageShell, SectionHeading } from "@/components/page-shell";
 import { getExploreItems } from "@/lib/data/public";
+import { EventType } from "@/app/generated/prisma/enums";
 
 export const revalidate = 900;
 
@@ -10,6 +11,7 @@ export default async function ExplorePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
+  const typeParam = Array.isArray(params.type) ? params.type[0] : params.type;
   const filters = {
     dataset: (Array.isArray(params.dataset) ? params.dataset[0] : params.dataset) as
       | "all"
@@ -22,9 +24,13 @@ export default async function ExplorePage({
     city: Array.isArray(params.city) ? params.city[0] : params.city,
     search: Array.isArray(params.search) ? params.search[0] : params.search,
     verifiedOnly: params.verified === "true",
+    rentalsOnly: params.rentals === "true",
     beginnerFriendly: params.beginner === "true",
     youthFriendly: params.youth === "true",
     noDrop: params.nodrop === "true",
+    eventType: Object.values(EventType).includes(typeParam as EventType)
+      ? (typeParam as EventType)
+      : undefined,
   };
   const items = await getExploreItems(filters);
 
@@ -32,7 +38,7 @@ export default async function ExplorePage({
     <PageShell className="gap-8">
       <SectionHeading
         eyebrow="Explore"
-        title="Find friends, rides, routes, clubs, businesses, and events"
+        title="Find rides, routes, clubs, shops and services, and events"
         description="Filter the map and browse what's happening around the county."
       />
       <form className="surface-card grid gap-4 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-6">
@@ -49,7 +55,7 @@ export default async function ExplorePage({
           className="h-12 rounded-2xl border border-[color:var(--color-border-soft)] bg-white/85 px-4 text-sm"
         >
           <option value="all">All listings</option>
-          <option value="shops">Businesses</option>
+          <option value="shops">Shops & services</option>
           <option value="clubs">Clubs</option>
           <option value="rides">Rides</option>
           <option value="events">Events</option>

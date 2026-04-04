@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
-import { ArrowRight, Compass, Flag, MapPinned, TentTree, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Bike,
+  Coffee,
+  Compass,
+  Flag,
+  MapPinned,
+  ShieldCheck,
+  Trophy,
+} from "lucide-react";
 import { ContentCard } from "@/components/content-card";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
 import { HomeHeroCarousel } from "@/components/home-hero-carousel";
@@ -9,15 +18,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getHomePageData } from "@/lib/data/public";
 import { formatOccurrenceStart } from "@/lib/recurrence";
+import { supportLink } from "@/lib/site";
 
 export const revalidate = 3600;
 
 const quickLinks = [
-  { href: "/rides", label: "Recurring rides", icon: Flag },
-  { href: "/clubs", label: "Clubs and teams", icon: Users },
-  { href: "/shops", label: "Bike-friendly businesses", icon: Compass },
-  { href: "/events", label: "Events calendar", icon: TentTree },
-  { href: "/routes", label: "Route guides", icon: MapPinned },
+  { href: "/rides", label: "Find a ride", icon: Flag },
+  { href: "/events?type=RACE", label: "Find a race", icon: Trophy },
+  { href: "/shops?rentals=true", label: "Rent a bike", icon: Bike },
+  { href: "/shops?verified=true", label: "Browse verified shops", icon: ShieldCheck },
+  { href: "/routes", label: "Plan a route", icon: MapPinned },
+  { href: "/visitors", label: "Visiting Sonoma? Start here", icon: Compass },
 ];
 
 export default async function HomePage() {
@@ -33,18 +44,17 @@ export default async function HomePage() {
             </Badge>
             <div className="space-y-4">
               <h1 className="max-w-4xl font-heading text-4xl leading-[0.95] text-[var(--color-pine)] sm:text-5xl lg:text-6xl">
-                Find friends, rides, routes, bike-friendly businesses, and local cycling knowledge for Sonoma
-                County.
+                Your one-stop shop for Sonoma County cycling
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-[var(--color-forest-muted)]">
-                Find a ride, a route, a helpful local business, or a local event without digging through
-                group chats and scattered posts.
+                Find group rides, races and events, route ideas, bike rentals, and verified local shops
+                without digging through group chats and scattered posts.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg" className="rounded-2xl px-6">
-                <Link href="/explore">
-                  Explore the county
+                <Link href="/clubs">
+                  CONNECT WITH A LOCAL CLUB
                   <ArrowRight />
                 </Link>
               </Button>
@@ -56,7 +66,7 @@ export default async function HomePage() {
           <HomeHeroCarousel />
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {quickLinks.map((link) => (
             <Link
               key={link.href}
@@ -123,7 +133,7 @@ export default async function HomePage() {
           <SectionHeading
             eyebrow="Featured"
             title="Good places to start"
-            description="A featured business, club, and route."
+            description="A featured shop or service, club, and route."
           />
           <div className="grid gap-4">
             {data.featuredShop ? (
@@ -131,7 +141,7 @@ export default async function HomePage() {
                 href={`/shops/${data.featuredShop.slug}`}
                 title={data.featuredShop.name}
                 summary={data.featuredShop.shortDescription}
-                eyebrow={data.featuredShop.type === "SHOP" ? "Featured shop" : "Featured business"}
+                eyebrow={data.featuredShop.type === "SHOP" ? "Featured shop" : "Featured service"}
                 meta={data.featuredShop.city}
                 badges={data.featuredShop.shopProfile?.serviceCategories.slice(0, 3)}
               />
@@ -177,7 +187,7 @@ export default async function HomePage() {
         ))}
       </section>
 
-      <section className="grid gap-8 rounded-[2rem] border border-[color:var(--color-border-soft)] bg-[color:var(--color-paper-strong)] px-6 py-8 lg:grid-cols-[1fr_0.8fr] lg:px-10">
+      <section className="grid gap-8 rounded-[2rem] border border-[color:var(--color-border-soft)] bg-[color:var(--color-paper-strong)] px-6 py-8 lg:grid-cols-[1fr_0.72fr_0.72fr] lg:px-10">
         <div className="space-y-4">
           <SectionHeading
             eyebrow="Newsletter"
@@ -185,6 +195,22 @@ export default async function HomePage() {
             description="Upcoming rides, events, and route picks. No flood of emails."
           />
           <NewsletterForm source="homepage" />
+        </div>
+        <div className="surface-card space-y-3 p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-forest-soft)]">
+            Support the project
+          </p>
+          <h3 className="font-heading text-3xl text-[var(--color-pine)]">Buy me a coffee</h3>
+          <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
+            If Cycle Sonoma County saves you time finding rides, routes, and local intel, chip in
+            to help keep it ad-free and maintained.
+          </p>
+          <Button asChild className="rounded-2xl px-5">
+            <a href={supportLink} target="_blank" rel="noreferrer">
+              Buy me a coffee
+              <Coffee />
+            </a>
+          </Button>
         </div>
         <div className="surface-card space-y-3 p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-forest-soft)]">

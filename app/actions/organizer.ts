@@ -12,6 +12,7 @@ import {
 } from "@/app/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import {
+  newsletterOrganizationDraftSchema,
   organizationOnboardingSchema,
   organizationInviteSchema,
   rideSeriesSchema,
@@ -19,6 +20,7 @@ import {
   routeGuideSchema,
   verificationRequestSchema,
 } from "@/lib/validators";
+import { saveNewsletterOrganizationDraft } from "@/lib/newsletter";
 import {
   canAdministerOrganization,
   canManageOrganization,
@@ -81,6 +83,93 @@ function revalidateGlobalPaths() {
   revalidatePath("/events");
   revalidatePath("/routes");
   revalidatePath("/visitors");
+}
+
+async function canManageNewsletterOrganization(userId: string, organizationId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { globalRole: true },
+  });
+
+  if (user?.globalRole === UserRole.ADMIN) {
+    return true;
+  }
+
+  const membership = await prisma.organizationMembership.findFirst({
+    where: {
+      userId,
+      organizationId,
+      role: {
+        in: [OrganizationMembershipRole.OWNER, OrganizationMembershipRole.EDITOR],
+      },
+    },
+    select: { id: true },
+  });
+
+  return Boolean(membership);
+}
+
+export async function saveNewsletterOrganizationDraftAction(input: {
+  organizationId: string;
+  content: string;
+}) {
+  const user = await requireOrganizerUser();
+  const parsed = newsletterOrganizationDraftSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message || "Unable to save the newsletter update.",
+    };
+  }
+
+  const permitted = await canManageNewsletterOrganization(user.id, parsed.data.organizationId);
+
+  if (!permitted) {
+    return {
+      ok: false,
+      message: "Only owners, editors, or admins can update that organization's newsletter note.",
+    };
+  }
+
+  try {
+    const draft = await saveNewsletterOrganizationDraft({
+      userId: user.id,
+      organizationId: parsed.data.organizationId,
+      content: parsed.data.content,
+    });
+
+    revalidatePath("/organizer");
+    revalidatePath("/admin");
+    revalidatePath("/admin/newsletter");
+
+    return {
+      ok: true,
+      message: "Newsletter update saved.",
+      draft: {
+        content: draft.content,
+        updatedAt: draft.updatedAt,
+        updatedAtLabel: draft.updatedAt.toLocaleString("en-US", {
+          timeZone: "America/Los_Angeles",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+        lastEditedByName:
+          draft.lastEditedBy?.displayName ||
+          [draft.lastEditedBy?.firstName, draft.lastEditedBy?.lastName].filter(Boolean).join(" ") ||
+          draft.lastEditedBy?.email ||
+          user.email,
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Unable to save the newsletter update.",
+    };
+  }
 }
 
 function normalizeRideCustomDates(input: { recurrenceMode: "CUSTOM" | "WEEKLY" | "MONTHLY"; customDates: string[] }) {
@@ -242,6 +331,7 @@ export async function createOrganizationAction(input: {
   websiteUrl?: string;
   socialUrl?: string;
   addressLine1?: string;
+  offersRentals?: boolean;
   latitude?: number;
   longitude?: number;
 }) {
@@ -289,7 +379,20 @@ export async function createOrganizationAction(input: {
         parsed.data.description,
         location.city,
         location.addressLine1,
+        parsed.data.offersRentals ? "rentals" : undefined,
       ]),
+      shopProfile:
+        (parsed.data.organizationType === OrganizationType.SHOP ||
+          parsed.data.organizationType === OrganizationType.BIKE_FRIENDLY_BUSINESS) &&
+        parsed.data.offersRentals
+          ? {
+              create: {
+                serviceCategories: ["Rental"],
+                brands: [],
+                offersRentals: true,
+              },
+            }
+          : undefined,
       memberships: {
         create: {
           userId: user.id,
@@ -335,6 +438,11 @@ export async function updateOrganizationAction(
     select: {
       slug: true,
       type: true,
+      shopProfile: {
+        select: {
+          id: true,
+        },
+      },
       city: true,
       addressLine1: true,
       postalCode: true,
@@ -393,7 +501,26 @@ export async function updateOrganizationAction(
         parsed.data.description,
         location.city,
         location.addressLine1,
+        parsed.data.offersRentals ? "rentals" : undefined,
       ]),
+      shopProfile:
+        parsed.data.organizationType === OrganizationType.SHOP ||
+        parsed.data.organizationType === OrganizationType.BIKE_FRIENDLY_BUSINESS
+          ? parsed.data.offersRentals || existingOrganization.shopProfile
+            ? {
+                upsert: {
+                  create: {
+                    serviceCategories: parsed.data.offersRentals ? ["Rental"] : [],
+                    brands: [],
+                    offersRentals: parsed.data.offersRentals,
+                  },
+                  update: {
+                    offersRentals: parsed.data.offersRentals,
+                  },
+                },
+              }
+            : undefined
+          : undefined,
     },
     select: {
       slug: true,

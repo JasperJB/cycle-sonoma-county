@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
-import { runNewsletterDigest } from "@/lib/newsletter";
+import { runNewsletterAutomation } from "@/lib/newsletter";
 
 export async function GET(request: Request) {
   const secret = new URL(request.url).searchParams.get("secret");
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await runNewsletterDigest();
+  const result = await runNewsletterAutomation();
 
   return NextResponse.json({ ok: true, result });
 }

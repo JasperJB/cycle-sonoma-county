@@ -82,6 +82,19 @@ export async function getAdminDashboardData() {
     sponsorPlacements,
     staleRides,
     pendingContent,
+    organizations: await prisma.organization.findMany({
+      orderBy: [{ verificationStatus: "asc" }, { name: "asc" }],
+      take: 24,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        type: true,
+        city: true,
+        listingStatus: true,
+        verificationStatus: true,
+      },
+    }),
     siteSettings,
   };
 }

@@ -30,6 +30,14 @@ const ExploreMapCanvas = dynamic(
   },
 );
 
+const datasetLabels: Record<ExploreItem["dataset"], string> = {
+  shops: "shops & services",
+  clubs: "clubs",
+  rides: "rides",
+  events: "events",
+  routes: "routes",
+};
+
 function ExploreResultCard({
   item,
   isActive,
@@ -57,7 +65,7 @@ function ExploreResultCard({
         className="w-full rounded-[1.25rem] px-4 py-4 text-left"
       >
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-forest-soft)]">
-          {item.dataset}
+          {datasetLabels[item.dataset]}
         </p>
         <h3 className="mt-2 break-words font-heading text-xl text-[var(--color-pine)] sm:text-2xl">
           {item.title}
@@ -153,7 +161,9 @@ export function ExploreExperience({ items }: { items: ExploreItem[] }) {
                 {items.length} result{items.length === 1 ? "" : "s"}
               </p>
               <p className="truncate text-sm font-medium text-[var(--color-pine)]">
-                {activeItem ? `${activeItem.dataset}: ${activeItem.title}` : "Browse results"}
+                {activeItem
+                  ? `${datasetLabels[activeItem.dataset]}: ${activeItem.title}`
+                  : "Browse results"}
               </p>
             </div>
             <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-pine)]">
@@ -182,7 +192,7 @@ export function ExploreExperience({ items }: { items: ExploreItem[] }) {
                 <div className="flex items-center gap-2 text-sm text-[var(--color-forest-muted)]">
                   <ChevronUp className="h-4 w-4 text-[var(--color-clay)]" />
                   <span className="truncate">
-                    Selected: {activeItem.dataset} - {activeItem.title}
+                    Selected: {datasetLabels[activeItem.dataset]} - {activeItem.title}
                   </span>
                 </div>
               ) : null}

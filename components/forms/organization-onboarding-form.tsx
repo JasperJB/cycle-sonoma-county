@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
   createOrganizationAction,
@@ -40,6 +40,7 @@ function buildDefaultValues(
     websiteUrl: initialValues?.websiteUrl || "",
     socialUrl: initialValues?.socialUrl || "",
     addressLine1: initialValues?.addressLine1 || "",
+    offersRentals: initialValues?.offersRentals || false,
     latitude: initialValues?.latitude,
     longitude: initialValues?.longitude,
   };
@@ -63,6 +64,12 @@ export function OrganizationOnboardingForm({
     resolver: zodResolver(organizationOnboardingSchema),
     defaultValues,
   });
+  const organizationType = useWatch({
+    control: form.control,
+    name: "organizationType",
+  });
+  const showRentalOption =
+    organizationType === "SHOP" || organizationType === "BIKE_FRIENDLY_BUSINESS";
 
   return (
     <form
@@ -147,6 +154,12 @@ export function OrganizationOnboardingForm({
           This address is geocoded when you save so the organization can show up on the explore map.
         </p>
       </div>
+      {showRentalOption ? (
+        <label className="flex items-center gap-2 text-sm text-[var(--color-pine)]">
+          <input type="checkbox" {...form.register("offersRentals")} />
+          Has bike rental services
+        </label>
+      ) : null}
       <Button type="submit" disabled={isPending} className="w-fit rounded-2xl px-6">
         {submitLabel}
       </Button>

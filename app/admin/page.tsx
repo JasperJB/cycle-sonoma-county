@@ -1,11 +1,15 @@
 import { redirect } from "next/navigation";
+import { VerificationStatus } from "@/app/generated/prisma/enums";
+import { updateOrganizationVerificationStatusAction } from "@/app/actions/admin";
 import {
   approveVerificationRequestAction,
   rejectVerificationRequestAction,
 } from "@/app/actions/organizer";
+import { AdminNewsletterConsole } from "@/components/admin-newsletter-console";
 import { PageShell, SectionHeading } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/user";
+import { getAdminNewsletterData } from "@/lib/newsletter";
 import { getAdminDashboardData, getUserLookupData } from "@/lib/data/dashboard";
 
 async function approveVerification(requestId: string) {
@@ -18,6 +22,22 @@ async function rejectVerification(requestId: string) {
   await rejectVerificationRequestAction(
     requestId,
     "Please add more organizer proof and resubmit.",
+  );
+}
+
+async function markOrganizationVerified(organizationId: string) {
+  "use server";
+  await updateOrganizationVerificationStatusAction(
+    organizationId,
+    VerificationStatus.APPROVED,
+  );
+}
+
+async function removeOrganizationVerifiedBadge(organizationId: string) {
+  "use server";
+  await updateOrganizationVerificationStatusAction(
+    organizationId,
+    VerificationStatus.PENDING,
   );
 }
 
@@ -38,6 +58,7 @@ export default async function AdminPage({
   }
 
   const dashboard = await getAdminDashboardData();
+  const newsletterData = await getAdminNewsletterData();
   const users = await getUserLookupData(
     Array.isArray(params.q) ? params.q[0] : params.q,
   );
@@ -59,6 +80,7 @@ export default async function AdminPage({
           </div>
         ))}
       </section>
+      <AdminNewsletterConsole data={newsletterData} />
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="surface-card space-y-4 p-6">
           <h2 className="font-heading text-3xl text-[var(--color-pine)]">Verification queue</h2>
@@ -99,6 +121,58 @@ export default async function AdminPage({
           </div>
         </div>
         <div className="space-y-6">
+          <div className="surface-card space-y-4 p-6">
+            <h2 className="font-heading text-3xl text-[var(--color-pine)]">
+              Organization verification
+            </h2>
+            <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
+              Add or remove the verified badge on published clubs, shops, and services without
+              waiting for a fresh organizer request.
+            </p>
+            <div className="grid gap-3">
+              {dashboard.organizations.map((organization) => {
+                const isVerified =
+                  organization.verificationStatus === VerificationStatus.APPROVED;
+
+                return (
+                  <div
+                    key={organization.id}
+                    className="rounded-[1.1rem] border border-[color:var(--color-border-soft)] bg-white/70 px-4 py-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-forest-soft)]">
+                          {organization.verificationStatus} ·{" "}
+                          {organization.type.replaceAll("_", " ")}
+                        </p>
+                        <p className="font-medium text-[var(--color-pine)]">
+                          {organization.name}
+                        </p>
+                        <p className="text-sm text-[var(--color-forest-muted)]">
+                          {organization.city} · {organization.listingStatus.replaceAll("_", " ")}
+                        </p>
+                      </div>
+                      <form
+                        action={
+                          isVerified
+                            ? removeOrganizationVerifiedBadge.bind(null, organization.id)
+                            : markOrganizationVerified.bind(null, organization.id)
+                        }
+                      >
+                        <Button
+                          type="submit"
+                          variant={isVerified ? "outline" : "default"}
+                          className="rounded-2xl px-4"
+                        >
+                          {isVerified ? "Remove verified badge" : "Mark verified"}
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           <div className="surface-card space-y-4 p-6">
             <h2 className="font-heading text-3xl text-[var(--color-pine)]">Reports</h2>
             <div className="grid gap-3">

@@ -1,4 +1,5 @@
 import {
+  EventType,
   ListingStatus,
   OccurrenceStatus,
   OrganizationType,
@@ -33,9 +34,11 @@ export type ExploreFilters = {
   dataset?: "all" | "shops" | "clubs" | "rides" | "events" | "routes";
   city?: string;
   verifiedOnly?: boolean;
+  rentalsOnly?: boolean;
   beginnerFriendly?: boolean;
   youthFriendly?: boolean;
   noDrop?: boolean;
+  eventType?: EventType;
   dateFrom?: string;
   dateTo?: string;
   search?: string;
@@ -188,6 +191,13 @@ export async function getShops(filters?: ExploreFilters) {
           verificationStatus: filters?.verifiedOnly
             ? VerificationStatus.APPROVED
             : undefined,
+          shopProfile: filters?.rentalsOnly
+            ? {
+                is: {
+                  offersRentals: true,
+                },
+              }
+            : undefined,
           searchDocument: containsSearch(filters?.search),
         },
         include: {
@@ -289,6 +299,7 @@ export async function getEvents(filters?: ExploreFilters) {
         where: {
           listingStatus: ListingStatus.PUBLISHED,
           city: filters?.city || undefined,
+          eventType: filters?.eventType || undefined,
           organization: {
             verificationStatus: filters?.verifiedOnly
               ? VerificationStatus.APPROVED
@@ -640,7 +651,7 @@ export async function getVisitorPageData() {
         prisma.rideSeries.findMany({
           where: {
             listingStatus: ListingStatus.PUBLISHED,
-            beginnerFriendly: true,
+            OR: [{ beginnerFriendly: true }, { dropPolicy: "NO_DROP" }],
           },
           include: {
             organization: true,

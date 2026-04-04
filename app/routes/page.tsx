@@ -1,18 +1,39 @@
 import { ContentCard, EmptyState } from "@/components/content-card";
+import { FilterChipNav } from "@/components/filter-chip-nav";
 import { PageShell, SectionHeading } from "@/components/page-shell";
 import { getRoutes } from "@/lib/data/public";
+import { routeFilterLinks } from "@/lib/site";
 
 export const revalidate = 3600;
 
-export default async function RoutesPage() {
-  const routes = await getRoutes();
+export default async function RoutesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const beginnerFriendly = params.beginner === "true";
+  const routes = await getRoutes({ beginnerFriendly });
+  const title = beginnerFriendly ? "Beginner-friendly routes" : "Route ideas for locals and visitors";
+  const description = beginnerFriendly
+    ? "Route ideas with approachable mileage, surfaces, and logistics for newer riders."
+    : "See distance, climbing, surface, and a few helpful notes before you roll out.";
 
   return (
     <PageShell className="gap-8">
       <SectionHeading
         eyebrow="Route guides"
-        title="Route ideas for locals and visitors"
-        description="See distance, climbing, surface, and a few helpful notes before you roll out."
+        title={title}
+        description={description}
+      />
+      <FilterChipNav
+        ariaLabel="Route filters"
+        items={routeFilterLinks.map((item) => ({
+          ...item,
+          active:
+            (item.href === "/routes" && !beginnerFriendly) ||
+            (item.href === "/routes?beginner=true" && beginnerFriendly),
+        }))}
       />
       {routes.length ? (
         <div className="grid gap-5 lg:grid-cols-3">

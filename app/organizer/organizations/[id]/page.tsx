@@ -25,6 +25,9 @@ export default async function EditOrganizationPage({
   const { id } = await params;
   const organization = await prisma.organization.findUnique({
     where: { id },
+    include: {
+      shopProfile: true,
+    },
   });
 
   if (!organization) {
@@ -61,6 +64,7 @@ export default async function EditOrganizationPage({
             websiteUrl: organization.websiteUrl || "",
             socialUrl: organization.instagramUrl || "",
             addressLine1: organization.addressLine1 || "",
+            offersRentals: organization.shopProfile?.offersRentals || false,
             latitude: organization.latitude || undefined,
             longitude: organization.longitude || undefined,
           }}

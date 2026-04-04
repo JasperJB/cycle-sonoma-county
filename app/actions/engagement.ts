@@ -11,6 +11,13 @@ export async function subscribeNewsletterAction(input: {
   source?: string;
 }) {
   const parsed = newsletterSchema.safeParse(input);
+  const session = await getSession();
+  const linkedUser = session
+    ? { id: session.userId }
+    : await prisma.user.findUnique({
+        where: { email: parsed.success ? parsed.data.email : input.email.trim().toLowerCase() },
+        select: { id: true },
+      });
 
   if (!parsed.success) {
     return {
@@ -23,11 +30,13 @@ export async function subscribeNewsletterAction(input: {
     where: { email: parsed.data.email },
     update: {
       status: NewsletterStatus.ACTIVE,
+      userId: linkedUser?.id,
       source: input.source || "site",
       unsubscribedAt: null,
     },
     create: {
       email: parsed.data.email,
+      userId: linkedUser?.id,
       status: NewsletterStatus.ACTIVE,
       source: input.source || "site",
     },

@@ -31,6 +31,17 @@ export const newsletterSchema = z.object({
   email: z.email().trim().toLowerCase(),
 });
 
+export const newsletterOrganizationDraftSchema = z.object({
+  organizationId: z.string().trim().min(1),
+  content: z.string().trim().min(1, "Add a note for this organization.").max(2500),
+});
+export type NewsletterOrganizationDraftInput = z.infer<typeof newsletterOrganizationDraftSchema>;
+
+export const newsletterGlobalSectionSchema = z.object({
+  content: z.string().trim().max(5000),
+});
+export type NewsletterGlobalSectionInput = z.infer<typeof newsletterGlobalSectionSchema>;
+
 const passwordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters.")
@@ -99,6 +110,7 @@ export const organizationOnboardingSchema = z.object({
     .trim()
     .min(5, "Enter a street or regular meetup address so the listing can appear on the map.")
     .max(160),
+  offersRentals: z.boolean().default(false),
   latitude: z.coerce.number().min(-90).max(90).optional(),
   longitude: z.coerce.number().min(-180).max(180).optional(),
 });

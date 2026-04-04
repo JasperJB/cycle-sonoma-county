@@ -119,6 +119,18 @@ export function EventSeriesForm({
     appendCustomDate(startsAtDate || "");
   }, [appendCustomDate, customDateFields.length, isRecurring, recurrenceMode, startsAtDate]);
 
+  useEffect(() => {
+    if (!isRecurring || recurrenceMode !== "CUSTOM") {
+      return;
+    }
+
+    const firstCustomDate = customDates.find(Boolean);
+
+    if (firstCustomDate && firstCustomDate !== startsAtDate) {
+      form.setValue("startsAtDate", firstCustomDate);
+    }
+  }, [customDates, form, isRecurring, recurrenceMode, startsAtDate]);
+
   return (
     <form
       className="grid gap-4"
@@ -187,16 +199,6 @@ export function EventSeriesForm({
         </select>
         <Input {...form.register("priceText")} placeholder="Price text" className="rounded-2xl bg-white/85" />
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Input type="date" {...form.register("startsAtDate")} className="rounded-2xl bg-white/85" />
-        <Input type="time" {...form.register("startsAtTime")} className="rounded-2xl bg-white/85" />
-        <Input
-          type="number"
-          {...form.register("durationMinutes")}
-          placeholder="Duration (minutes)"
-          className="rounded-2xl bg-white/85"
-        />
-      </div>
       <Input {...form.register("locationName")} placeholder="Location name" className="rounded-2xl bg-white/85" />
       <div className="grid gap-2">
         <Input
@@ -239,40 +241,31 @@ export function EventSeriesForm({
           Use custom dates for race series that run on a fixed set of calendar dates.
         </p>
       </div>
+      {!isRecurring || recurrenceMode !== "CUSTOM" ? (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Input type="date" {...form.register("startsAtDate")} className="rounded-2xl bg-white/85" />
+          <Input type="time" {...form.register("startsAtTime")} className="rounded-2xl bg-white/85" />
+          <Input
+            type="number"
+            {...form.register("durationMinutes")}
+            placeholder="Duration (minutes)"
+            className="rounded-2xl bg-white/85"
+          />
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <input type="hidden" {...form.register("startsAtDate")} />
+          <Input type="time" {...form.register("startsAtTime")} className="rounded-2xl bg-white/85" />
+          <Input
+            type="number"
+            {...form.register("durationMinutes")}
+            placeholder="Duration (minutes)"
+            className="rounded-2xl bg-white/85"
+          />
+        </div>
+      )}
       {isRecurring ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <select
-              {...form.register("recurrenceMode")}
-              className="h-11 rounded-2xl border border-[color:var(--color-border-soft)] bg-white/85 px-4 text-sm"
-            >
-              <option value="CUSTOM">Custom</option>
-              <option value="WEEKLY">Weekly</option>
-              <option value="MONTHLY">Monthly</option>
-            </select>
-            {recurrenceMode !== "CUSTOM" ? (
-              <>
-                <div className="grid gap-1">
-                  <Input
-                    type="number"
-                    {...form.register("recurrenceInterval")}
-                    placeholder="Interval"
-                    className="rounded-2xl bg-white/85"
-                  />
-                  <p className="text-xs text-[var(--color-forest-muted)]">
-                    {recurrenceMode === "WEEKLY"
-                      ? "Use 2 for every other week."
-                      : "Use 2 for every other month."}
-                  </p>
-                </div>
-                <Input
-                  type="date"
-                  {...form.register("recurrenceUntil")}
-                  className="rounded-2xl bg-white/85"
-                />
-              </>
-            ) : null}
-          </div>
           {recurrenceMode === "CUSTOM" ? (
             <div className="grid gap-3">
               <div className="flex items-center justify-between gap-3">
@@ -317,77 +310,101 @@ export function EventSeriesForm({
                 ))}
               </div>
             </div>
-          ) : recurrenceMode === "WEEKLY" ? (
-            <div className="grid gap-3">
-              <label className="text-sm font-medium text-[var(--color-pine)]">Days of week</label>
-              <div className="flex flex-wrap gap-2">
-                {weekdays.map((weekday) => (
-                  <button
-                    key={weekday}
-                    type="button"
-                    onClick={() =>
-                      form.setValue(
-                        "weekdays",
-                        selectedWeekdays.includes(weekday)
-                          ? selectedWeekdays.filter((value) => value !== weekday)
-                          : [...selectedWeekdays, weekday],
-                      )
-                    }
-                    className={`rounded-full border px-3 py-1 text-sm ${
-                      selectedWeekdays.includes(weekday)
-                        ? "border-[var(--color-clay)] bg-[var(--color-paper-strong)] text-[var(--color-pine)]"
-                        : "border-[color:var(--color-border-soft)] bg-white/85 text-[var(--color-forest-muted)]"
-                    }`}
-                  >
-                    {weekday}
-                  </button>
-                ))}
-              </div>
-            </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-3">
-                <label className="text-sm font-medium text-[var(--color-pine)]">Weeks of the month</label>
-                <div className="flex flex-wrap gap-2">
-                  {monthlyWeekOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() =>
-                        form.setValue(
-                          "monthlyWeeks",
-                          selectedMonthlyWeeks.includes(option.value)
-                            ? selectedMonthlyWeeks.filter((value) => value !== option.value)
-                            : [...selectedMonthlyWeeks, option.value].sort((left, right) =>
-                                left === -1 ? 1 : right === -1 ? -1 : left - right,
-                              ),
-                        )
-                      }
-                      className={`rounded-full border px-3 py-1 text-sm ${
-                        selectedMonthlyWeeks.includes(option.value)
-                          ? "border-[var(--color-clay)] bg-[var(--color-paper-strong)] text-[var(--color-pine)]"
-                          : "border-[color:var(--color-border-soft)] bg-white/85 text-[var(--color-forest-muted)]"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+            <>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-1">
+                  <Input
+                    type="number"
+                    {...form.register("recurrenceInterval")}
+                    placeholder="Interval"
+                    className="rounded-2xl bg-white/85"
+                  />
+                  <p className="text-xs text-[var(--color-forest-muted)]">
+                    {recurrenceMode === "WEEKLY"
+                      ? "Use 2 for every other week."
+                      : "Use 2 for every other month."}
+                  </p>
                 </div>
+                <Input
+                  type="date"
+                  {...form.register("recurrenceUntil")}
+                  className="rounded-2xl bg-white/85"
+                />
               </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-medium text-[var(--color-pine)]">Monthly weekday</label>
-                <select
-                  {...form.register("monthlyWeekday")}
-                  className="h-11 rounded-2xl border border-[color:var(--color-border-soft)] bg-white/85 px-4 text-sm"
-                >
-                  {weekdays.map((weekday) => (
-                    <option key={weekday} value={weekday}>
-                      {weekday}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+              {recurrenceMode === "WEEKLY" ? (
+                <div className="grid gap-3">
+                  <label className="text-sm font-medium text-[var(--color-pine)]">Days of week</label>
+                  <div className="flex flex-wrap gap-2">
+                    {weekdays.map((weekday) => (
+                      <button
+                        key={weekday}
+                        type="button"
+                        onClick={() =>
+                          form.setValue(
+                            "weekdays",
+                            selectedWeekdays.includes(weekday)
+                              ? selectedWeekdays.filter((value) => value !== weekday)
+                              : [...selectedWeekdays, weekday],
+                          )
+                        }
+                        className={`rounded-full border px-3 py-1 text-sm ${
+                          selectedWeekdays.includes(weekday)
+                            ? "border-[var(--color-clay)] bg-[var(--color-paper-strong)] text-[var(--color-pine)]"
+                            : "border-[color:var(--color-border-soft)] bg-white/85 text-[var(--color-forest-muted)]"
+                        }`}
+                      >
+                        {weekday}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-3">
+                    <label className="text-sm font-medium text-[var(--color-pine)]">Weeks of the month</label>
+                    <div className="flex flex-wrap gap-2">
+                      {monthlyWeekOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() =>
+                            form.setValue(
+                              "monthlyWeeks",
+                              selectedMonthlyWeeks.includes(option.value)
+                                ? selectedMonthlyWeeks.filter((value) => value !== option.value)
+                                : [...selectedMonthlyWeeks, option.value].sort((left, right) =>
+                                    left === -1 ? 1 : right === -1 ? -1 : left - right,
+                                  ),
+                            )
+                          }
+                          className={`rounded-full border px-3 py-1 text-sm ${
+                            selectedMonthlyWeeks.includes(option.value)
+                              ? "border-[var(--color-clay)] bg-[var(--color-paper-strong)] text-[var(--color-pine)]"
+                              : "border-[color:var(--color-border-soft)] bg-white/85 text-[var(--color-forest-muted)]"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-sm font-medium text-[var(--color-pine)]">Monthly weekday</label>
+                    <select
+                      {...form.register("monthlyWeekday")}
+                      className="h-11 rounded-2xl border border-[color:var(--color-border-soft)] bg-white/85 px-4 text-sm"
+                    >
+                      {weekdays.map((weekday) => (
+                        <option key={weekday} value={weekday}>
+                          {weekday}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </>
       ) : null}

@@ -55,6 +55,8 @@ function localDate(date: string, time: string) {
 async function main() {
   await prisma.auditLog.deleteMany();
   await prisma.report.deleteMany();
+  await prisma.newsletterOrganizationDraft.deleteMany();
+  await prisma.newsletterIssue.deleteMany();
   await prisma.newsletterDigest.deleteMany();
   await prisma.newsletterSubscriber.deleteMany();
   await prisma.sponsorPlacement.deleteMany();
@@ -1278,6 +1280,12 @@ async function main() {
   await prisma.newsletterSubscriber.createMany({
     data: [
       {
+        email: memberUser.email,
+        userId: memberUser.id,
+        status: NewsletterStatus.ACTIVE,
+        source: "account",
+      },
+      {
         email: "mia.visitor@example.com",
         status: NewsletterStatus.ACTIVE,
         source: "homepage",
@@ -1388,8 +1396,9 @@ async function main() {
       {
         key: "newsletter",
         value: {
-          sendDay: "thursday",
-          digestHour: 8,
+          reminderHour: 9,
+          lockHour: 18,
+          sendHour: 18,
           digestTimezone: timezone,
           dryRun: true,
         },

@@ -72,6 +72,7 @@ export default async function ShopDetailPage({
         location={shop.city}
         badges={[
           ...(shop.shopProfile?.serviceCategories || []),
+          ...(shop.shopProfile?.offersRentals ? ["Rentals"] : []),
           ...(shop.verificationStatus === "APPROVED" ? ["Verified"] : []),
         ]}
         actions={

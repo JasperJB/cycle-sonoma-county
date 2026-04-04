@@ -6,7 +6,6 @@ import {
   Building2,
   CalendarDays,
   Flag,
-  FolderKanban,
   Map,
   Sparkles,
   Users2,
@@ -26,6 +25,7 @@ import {
 } from "@/app/actions/organizer";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { EventSeriesForm } from "@/components/forms/event-series-form";
+import { OrganizerNewsletterForm } from "@/components/forms/organizer-newsletter-form";
 import { OrganizationInviteForm } from "@/components/forms/organization-invite-form";
 import { OrganizationOnboardingForm } from "@/components/forms/organization-onboarding-form";
 import { RideSeriesForm } from "@/components/forms/ride-series-form";
@@ -35,6 +35,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getOrganizerDashboardData, getOrganizationOptionsForUser } from "@/lib/data/dashboard";
+import { getOrganizerNewsletterData } from "@/lib/newsletter";
 import { hasOrganizerAccess } from "@/lib/permissions";
 
 type OrganizerDashboard = Awaited<ReturnType<typeof getOrganizerDashboardData>>;
@@ -62,6 +63,31 @@ function SectionPill({ children }: { children: ReactNode }) {
     <span className="rounded-full border border-[color:var(--color-border-soft)] bg-white/80 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[var(--color-pine)]">
       {children}
     </span>
+  );
+}
+
+function JumpLink({
+  href,
+  eyebrow,
+  label,
+  meta,
+}: {
+  href: string;
+  eyebrow: string;
+  label: string;
+  meta: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="rounded-[1.2rem] border border-[color:var(--color-border-soft)] bg-white/72 px-4 py-4 transition hover:-translate-y-0.5 hover:border-[color:var(--color-clay)]/35 hover:shadow-[0_18px_50px_-34px_rgba(24,58,45,0.35)]"
+    >
+      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-[var(--color-forest-soft)]">
+        {eyebrow}
+      </p>
+      <p className="mt-2 font-medium text-[var(--color-pine)]">{label}</p>
+      <p className="mt-1 text-sm text-[var(--color-forest-muted)]">{meta}</p>
+    </Link>
   );
 }
 
@@ -99,7 +125,9 @@ function ConsoleSection({
   eyebrow,
   title,
   description,
+  details,
   pill,
+  defaultOpen = false,
   children,
 }: {
   value: string;
@@ -107,38 +135,49 @@ function ConsoleSection({
   eyebrow: string;
   title: string;
   description: string;
+  details?: ReactNode;
   pill?: string;
+  defaultOpen?: boolean;
   children: ReactNode;
 }) {
   return (
-    <AccordionItem value={value} className="organizer-panel border-none">
-      <AccordionTrigger className="px-5 py-5 no-underline hover:no-underline">
-        <div className="flex w-full items-start gap-4">
-          <span className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-pine)]/10 text-[var(--color-pine)]">
-            <Icon className="h-5 w-5" />
-          </span>
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-forest-soft)]">
-                {eyebrow}
-              </p>
-              {pill ? <SectionPill>{pill}</SectionPill> : null}
-            </div>
-            <div className="space-y-1">
-              <h2 className="font-heading text-2xl text-[var(--color-pine)] sm:text-3xl">
-                {title}
-              </h2>
-              <p className="max-w-3xl text-sm leading-6 text-[var(--color-forest-muted)]">
-                {description}
-              </p>
+    <Accordion multiple defaultValue={defaultOpen ? [value] : []} className="w-full">
+      <AccordionItem value={value} className="organizer-panel organizer-console-box border-none">
+        <AccordionTrigger className="organizer-box-trigger px-5 py-5 no-underline hover:no-underline">
+          <div className="flex w-full items-start gap-4">
+            <span className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-pine)]/10 text-[var(--color-pine)]">
+              <Icon className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1 space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-forest-soft)]">
+                  {eyebrow}
+                </p>
+                {pill ? <SectionPill>{pill}</SectionPill> : null}
+              </div>
+              <div className="space-y-2">
+                <h2 className="font-heading text-2xl text-[var(--color-pine)] sm:text-3xl">
+                  {title}
+                </h2>
+                <p className="max-w-3xl text-sm leading-6 text-[var(--color-forest-muted)]">
+                  {description}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </AccordionTrigger>
-      <AccordionContent className="px-5 pb-5">
-        <div className="animate-in fade-in-0 slide-in-from-top-3 duration-300">{children}</div>
-      </AccordionContent>
-    </AccordionItem>
+        </AccordionTrigger>
+        <AccordionContent className="organizer-box-content px-5 pb-5">
+          <div className="animate-in fade-in-0 slide-in-from-top-3 space-y-5 duration-300">
+            {details ? (
+              <div className="rounded-[1.15rem] border border-[color:var(--color-border-soft)] bg-[var(--color-paper-strong)]/40 px-4 py-3 text-sm leading-6 text-[var(--color-forest-muted)]">
+                {details}
+              </div>
+            ) : null}
+            {children}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }
 
@@ -274,9 +313,9 @@ function CollaboratorOrganizationPanel({
   return (
     <AccordionItem
       value={organization.id}
-      className="rounded-[1.25rem] border border-[color:var(--color-border-soft)] bg-white/82"
+      className="organizer-subpanel rounded-[1.25rem] border-none"
     >
-      <AccordionTrigger className="px-4 py-4 no-underline hover:no-underline">
+      <AccordionTrigger className="organizer-subpanel-trigger px-4 py-4 no-underline hover:no-underline">
         <div className="flex w-full items-start gap-3">
           <div className="min-w-0 flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -285,8 +324,12 @@ function CollaboratorOrganizationPanel({
               </p>
               <SectionPill>{organization.currentUserRole.toLowerCase()}</SectionPill>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <h3 className="font-heading text-2xl text-[var(--color-pine)]">{organization.name}</h3>
+              <p className="text-sm leading-6 text-[var(--color-forest-muted)]">
+                Review current collaborators, pending invites, and organization-specific access in
+                this box.
+              </p>
               <p className="text-sm text-[var(--color-forest-muted)]">
                 {countLabel(organization.memberships.length, "collaborator")} and{" "}
                 {countLabel(organization.invites.length, "pending invite")}
@@ -295,7 +338,7 @@ function CollaboratorOrganizationPanel({
           </div>
         </div>
       </AccordionTrigger>
-      <AccordionContent className="px-4 pb-4">
+      <AccordionContent className="organizer-subpanel-content px-4 pb-4">
         <div className="grid gap-5 lg:grid-cols-2">
           <div className="space-y-3">
             <p className="text-sm font-medium text-[var(--color-pine)]">Collaborators</p>
@@ -410,6 +453,7 @@ export default async function OrganizerPage() {
   }
 
   const dashboard = await getOrganizerDashboardData(user.id);
+  const newsletterData = await getOrganizerNewsletterData(user.id);
   const organizations = await getOrganizationOptionsForUser(user.id);
   const draftOrganizations = dashboard.organizations.filter(
     (organization) => organization.listingStatus !== "PUBLISHED",
@@ -451,12 +495,16 @@ export default async function OrganizerPage() {
     .sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime());
   const draftRouteGuides = routeGuides.filter((route) => route.listingStatus !== "PUBLISHED");
   const publishedRouteGuides = routeGuides.filter((route) => route.listingStatus === "PUBLISHED");
-
-  const defaultSections = [
-    !dashboard.organizations.length ? "create-organization" : null,
-    ownerManagedOrganizations.length ? "collaborators" : null,
-    draftOrganizations.length ? "organization-drafts" : null,
-  ].filter(Boolean) as string[];
+  const totalDraftItems =
+    draftOrganizations.length +
+    draftRideSeries.length +
+    draftEventSeries.length +
+    draftRouteGuides.length;
+  const totalPublishedItems =
+    publishedOrganizations.length +
+    publishedRideSeries.length +
+    publishedEventSeries.length +
+    publishedRouteGuides.length;
 
   return (
     <PageShell className="gap-8 pb-14">
@@ -465,8 +513,8 @@ export default async function OrganizerPage() {
           <div className="max-w-3xl space-y-4">
             <SectionHeading
               eyebrow="Organizer console"
-              title="A cleaner control tower for organizations, schedules, and collaborators"
-              description="Everything is now grouped into expandable sections so you can open the tool you need, finish the task, and get back out without scrolling past every other form on the page."
+              title="Create organizations, invite collaborators, and manage public listings"
+              description="Use this console to create organization profiles, create ride series, create events, create route guides, and control which listings are public."
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -485,27 +533,127 @@ export default async function OrganizerPage() {
         <StatCard icon={Map} label="Route Guides" value={dashboard.stats.routes} delay={280} />
       </section>
 
-      <Accordion multiple defaultValue={defaultSections} className="gap-5">
+      <section className="organizer-panel px-5 py-5 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-forest-soft)]">
+              Weekly Newsletter
+            </p>
+            <h2 className="font-heading text-3xl text-[var(--color-pine)]">
+              Add your organization updates for the next issue
+            </h2>
+            <p className="text-sm leading-6 text-[var(--color-forest-muted)]">
+              Pick an organization you manage, add its weekly note, and lock everything in before
+              Friday evening.
+            </p>
+          </div>
+          <SectionPill>{newsletterData.organizations.length} eligible orgs</SectionPill>
+        </div>
+        <div className="mt-5 rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/88 p-5">
+          <OrganizerNewsletterForm
+            issueLabel={`Week of ${newsletterData.issue.schedule.label}`}
+            weekRangeLabel={newsletterData.issue.schedule.rangeLabel}
+            deadlineLabel="Fri 6:00 PM PT"
+            sendLabel="Sat 6:00 PM PT"
+            isLocked={newsletterData.issue.displayStatus !== "OPEN"}
+            organizations={newsletterData.organizations.map((organization) => ({
+              id: organization.id,
+              name: organization.name,
+              type: organization.type,
+              city: organization.city,
+              draft: organization.draft
+                ? {
+                    content: organization.draft.content,
+                    lastEditedByName: organization.draft.lastEditedByName,
+                    updatedAtLabel: organization.draft.updatedAt.toLocaleString("en-US", {
+                      timeZone: "America/Los_Angeles",
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    }),
+                    adminOverridden: organization.draft.adminOverridden,
+                  }
+                : null,
+            }))}
+          />
+        </div>
+      </section>
+
+      <section className="organizer-panel px-5 py-5 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-forest-soft)]">
+              Quick Navigation
+            </p>
+            <h2 className="font-heading text-3xl text-[var(--color-pine)]">Jump to the task you need</h2>
+            <p className="text-sm leading-6 text-[var(--color-forest-muted)]">
+              Go straight to setup, creation tools, draft cleanup, or the live listings you need to
+              adjust.
+            </p>
+          </div>
+          <SectionPill>{countLabel(totalDraftItems, "draft item")}</SectionPill>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <JumpLink
+            href="#organizer-setup"
+            eyebrow="Setup"
+            label="Organizations and access"
+            meta={`${countLabel(dashboard.stats.organizations, "organization")} and ${countLabel(ownerManagedOrganizations.length, "owner-managed org")}`}
+          />
+          <JumpLink
+            href="#organizer-create"
+            eyebrow="Create"
+            label="Ride, event, and route tools"
+            meta={`${countLabel(draftRideSeries.length, "ride draft")}, ${countLabel(draftEventSeries.length, "event draft")}, ${countLabel(draftRouteGuides.length, "route draft")}`}
+          />
+          <JumpLink
+            href="#organizer-drafts"
+            eyebrow="Drafts"
+            label="Private items waiting for publish"
+            meta={countLabel(totalDraftItems, "draft item")}
+          />
+          <JumpLink
+            href="#organizer-live"
+            eyebrow="Live"
+            label="Published listings"
+            meta={countLabel(totalPublishedItems, "published item")}
+          />
+        </div>
+      </section>
+
+      <section id="organizer-setup" className="grid gap-5 xl:grid-cols-2">
         <ConsoleSection
           value="create-organization"
           icon={Sparkles}
-          eyebrow="Setup"
+          eyebrow="Organization Setup"
           title={
             dashboard.organizations.length
-              ? "Add another organization when you need one"
-              : "Create your first organization"
+              ? "Create another organization profile"
+              : "Create your first organization profile"
           }
-          description="This section is only for the org profile itself. Keep it collapsed until you need a new club, team, shop, or group."
-          pill={dashboard.organizations.length ? countLabel(dashboard.organizations.length, "active org") : "Start here"}
+          description="Use this box to create the public club, team, shop, or business profile that will own rides, events, and route guides."
+          details="After you save the organization, it stays private in this console as a draft until you publish it."
+          pill={
+            dashboard.organizations.length
+              ? countLabel(dashboard.organizations.length, "active organization")
+              : "Start here"
+          }
+          defaultOpen={!dashboard.organizations.length}
         >
           <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr]">
             <div className="space-y-4">
               <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
-                Ownership already supports multiple organizations. Create each public profile once,
-                then manage its rides, events, and routes separately below.
+                Create one organization profile for each local entity you manage, then attach ride
+                series, events, and route guides to the correct organization below.
               </p>
+              <div className="rounded-[1.25rem] border border-[color:var(--color-border-soft)] bg-[var(--color-paper-strong)]/45 p-4 text-sm leading-7 text-[var(--color-forest-muted)]">
+                Multi-organization ownership is already supported, so you do not need separate
+                accounts for separate clubs, teams, or businesses.
+              </div>
             </div>
-            <div className="rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/85 p-5">
+            <div className="rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/88 p-5">
               <OrganizationOnboardingForm />
             </div>
           </div>
@@ -515,26 +663,31 @@ export default async function OrganizerPage() {
           <ConsoleSection
             value="collaborators"
             icon={Users2}
-            eyebrow="Team Access"
-            title="Share access without sharing passwords"
-            description="Owners can invite collaborators, and each accepted collaborator automatically gets access to that organization's profile, rides, events, and route guides."
-            pill={countLabel(ownerManagedOrganizations.length, "owner-managed org")}
+            eyebrow="Access Control"
+            title="Invite someone to manage an organization"
+            description="Owners use this box to create an invite link for a collaborator's own login instead of sharing a password."
+            details={
+              ownerManagedOrganizations.length
+                ? "Accepted invites give that person access to the selected organization's profile, ride series, events, and route guides. Only owners can send or revoke invites and remove collaborators."
+                : "You can review collaborators below, but only owners can create invite links, revoke pending invites, or remove access."
+            }
+            pill={countLabel(ownerManagedOrganizations.length, "organization you own")}
+            defaultOpen={ownerManagedOrganizations.length > 0 && dashboard.organizations.length === 1}
           >
             <div className="space-y-6">
               {ownerManagedOrganizations.length ? (
                 <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
                   <div className="space-y-4">
                     <p className="text-sm leading-7 text-[var(--color-forest-muted)]">
-                      Create an invite link, send it by email or message, and let the recipient sign
-                      up or sign in with the invited email address. The app attaches their organizer
-                      access automatically after authentication.
+                      Create an invite link for a specific email address, choose the access level,
+                      and select which organizations that person can manage.
                     </p>
                     <div className="rounded-[1.25rem] border border-[color:var(--color-border-soft)] bg-[var(--color-paper-strong)]/45 p-4 text-sm leading-7 text-[var(--color-forest-muted)]">
-                      Owners can invite, revoke pending links, and remove collaborators. Editors and
-                      contributors can still manage the shared organization&apos;s content.
+                      When the recipient signs up or signs in with that invited email address, the
+                      shared organization access attaches automatically.
                     </div>
                   </div>
-                  <div className="rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/85 p-5">
+                  <div className="rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/88 p-5">
                     <OrganizationInviteForm
                       organizations={ownerManagedOrganizations.map((organization) => ({
                         id: organization.id,
@@ -546,8 +699,8 @@ export default async function OrganizerPage() {
                 </div>
               ) : (
                 <div className="rounded-[1.25rem] border border-[color:var(--color-border-soft)] bg-[var(--color-paper-strong)]/45 p-4 text-sm leading-7 text-[var(--color-forest-muted)]">
-                  You can edit shared organizations here, but only owners can invite or remove other
-                  collaborators.
+                  You can edit shared organizations here, but you cannot send invite links or
+                  remove collaborators unless you are an owner on that organization.
                 </div>
               )}
 
@@ -563,64 +716,61 @@ export default async function OrganizerPage() {
             </div>
           </ConsoleSection>
         ) : null}
+      </section>
 
-        {dashboard.organizations.length ? (
+      {dashboard.organizations.length ? (
+        <section id="organizer-create" className="grid gap-5 xl:grid-cols-3">
           <ConsoleSection
-            value="create-content"
-            icon={FolderKanban}
-            eyebrow="Content Studio"
-            title="Open only the form you need"
-            description="Rides, events, and routes each live in their own collapsible panel so the page stays compact until you are actively creating something."
-            pill="3 creation tools"
+            value="create-ride"
+            icon={Bike}
+            eyebrow="Ride Series"
+            title="Create a ride series"
+            description="Use this box to create a recurring ride listing with schedule, meeting location, pace details, and organizer ownership."
+            details="The ride series stays private in this console as a draft until you publish it, and it appears on the public rides page after publish."
+            pill={countLabel(draftRideSeries.length, "ride draft")}
           >
-            <Accordion className="gap-4" multiple>
-              <ConsoleSection
-                value="create-ride"
-                icon={Bike}
-                eyebrow="Create recurring ride"
-                title="Add a new ride series"
-                description="Open this only when you are actively building or editing ride rhythm details."
-                pill={countLabel(draftRideSeries.length, "ride draft")}
-              >
-                <div className="rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/85 p-5">
-                  <RideSeriesForm organizations={organizations} />
-                </div>
-              </ConsoleSection>
-              <ConsoleSection
-                value="create-event"
-                icon={CalendarDays}
-                eyebrow="Create event"
-                title="Add a one-off or recurring event"
-                description="Keep events separate from rides so the public calendar stays clear."
-                pill={countLabel(draftEventSeries.length, "event draft")}
-              >
-                <div className="rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/85 p-5">
-                  <EventSeriesForm organizations={organizations} />
-                </div>
-              </ConsoleSection>
-              <ConsoleSection
-                value="create-route"
-                icon={Map}
-                eyebrow="Create route guide"
-                title="Add a route guide for locals or visitors"
-                description="Capture a route only when you are ready to fill in the details, not before."
-                pill={countLabel(draftRouteGuides.length, "route draft")}
-              >
-                <div className="rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/85 p-5">
-                  <RouteGuideForm organizations={organizations} />
-                </div>
-              </ConsoleSection>
-            </Accordion>
+            <div className="rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/88 p-5">
+              <RideSeriesForm organizations={organizations} />
+            </div>
           </ConsoleSection>
-        ) : null}
+          <ConsoleSection
+            value="create-event"
+            icon={CalendarDays}
+            eyebrow="Events"
+            title="Create an event"
+            description="Use this box to create a one-off or recurring event listing with the details that should appear on the public event calendar."
+            details="The event stays private in this console as a draft until you publish it, and it appears on the public events page after publish."
+            pill={countLabel(draftEventSeries.length, "event draft")}
+          >
+            <div className="rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/88 p-5">
+              <EventSeriesForm organizations={organizations} />
+            </div>
+          </ConsoleSection>
+          <ConsoleSection
+            value="create-route"
+            icon={Map}
+            eyebrow="Route Guides"
+            title="Create a route guide"
+            description="Use this box to create a route guide with distance, surface, elevation, and rider guidance for locals or visitors."
+            details="The route guide stays private in this console as a draft until you publish it, and it appears on the public routes page after publish."
+            pill={countLabel(draftRouteGuides.length, "route draft")}
+          >
+            <div className="rounded-[1.35rem] border border-[color:var(--color-border-soft)] bg-white/88 p-5">
+              <RouteGuideForm organizations={organizations} />
+            </div>
+          </ConsoleSection>
+        </section>
+      ) : null}
 
+      <section id="organizer-drafts" className="space-y-5">
         {draftOrganizations.length ? (
           <ConsoleSection
             value="organization-drafts"
             icon={Flag}
-            eyebrow="Drafts"
-            title="Organization drafts"
-            description="Private organization profiles waiting for publish, revision, or deletion."
+            eyebrow="Organization Drafts"
+            title="Publish, edit, or delete organization drafts"
+            description="Use this box to review organization profiles that are still private and decide whether to publish, revise, or remove them."
+            details="Publishing makes the organization page public and allows published listings under that organization to appear on the site."
             pill={countLabel(draftOrganizations.length, "draft")}
           >
             <div className="grid gap-4 lg:grid-cols-2">
@@ -636,11 +786,11 @@ export default async function OrganizerPage() {
                 >
                   <form action={publishOrganization.bind(null, organization.id)}>
                     <Button type="submit" className="rounded-2xl px-4">
-                      Publish
+                      Publish organization
                     </Button>
                   </form>
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/organizer/organizations/${organization.id}`}>Edit</Link>
+                    <Link href={`/organizer/organizations/${organization.id}`}>Edit organization profile</Link>
                   </Button>
                   <form action={removeOrganization.bind(null, organization.id)}>
                     <ConfirmSubmitButton
@@ -649,7 +799,7 @@ export default async function OrganizerPage() {
                       className="rounded-2xl px-4"
                       confirmationMessage={`Delete ${organization.name} and all of its listings?`}
                     >
-                      Delete
+                      Delete organization
                     </ConfirmSubmitButton>
                   </form>
                 </ManagementCard>
@@ -658,14 +808,17 @@ export default async function OrganizerPage() {
           </ConsoleSection>
         ) : null}
 
+        {totalPublishedItems ? <div id="organizer-live" className="scroll-mt-28" /> : null}
+
         {publishedOrganizations.length ? (
           <ConsoleSection
             value="organization-published"
             icon={Building2}
-            eyebrow="Published"
-            title="Published organizations"
-            description="Public organization pages that are already live."
-            pill={countLabel(publishedOrganizations.length, "published org")}
+            eyebrow="Published Organizations"
+            title="Manage published organization pages"
+            description="Use this box to open, edit, unpublish, or delete organization pages that are already live on the public site."
+            details="Moving an organization back to draft hides its public page and can prevent connected listings from appearing publicly."
+            pill={countLabel(publishedOrganizations.length, "published organization")}
           >
             <div className="grid gap-4 lg:grid-cols-3">
               {publishedOrganizations.map((organization) => (
@@ -687,15 +840,15 @@ export default async function OrganizerPage() {
                           : `/clubs/${organization.slug}`
                       }
                     >
-                      View public page
+                      Open public page
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/organizer/organizations/${organization.id}`}>Edit</Link>
+                    <Link href={`/organizer/organizations/${organization.id}`}>Edit organization profile</Link>
                   </Button>
                   <form action={moveOrganizationToDraft.bind(null, organization.id)}>
                     <Button type="submit" variant="outline" className="rounded-2xl px-4">
-                      Move to draft
+                      Move organization to draft
                     </Button>
                   </form>
                   <form action={removeOrganization.bind(null, organization.id)}>
@@ -705,7 +858,7 @@ export default async function OrganizerPage() {
                       className="rounded-2xl px-4"
                       confirmationMessage={`Delete ${organization.name} and all of its listings?`}
                     >
-                      Delete
+                      Delete organization
                     </ConfirmSubmitButton>
                   </form>
                 </ManagementCard>
@@ -718,9 +871,10 @@ export default async function OrganizerPage() {
           <ConsoleSection
             value="ride-drafts"
             icon={Bike}
-            eyebrow="Drafts"
-            title="Ride series drafts"
-            description="Recurring rides waiting to be published."
+            eyebrow="Ride Series Drafts"
+            title="Publish, edit, or delete ride series drafts"
+            description="Use this box to review recurring ride listings that are still private and decide whether to publish, revise, or remove them."
+            details="Publishing adds the ride series to the public rides page, as long as the parent organization is already published."
             pill={countLabel(draftRideSeries.length, "draft")}
           >
             <div className="grid gap-4 lg:grid-cols-2">
@@ -737,11 +891,11 @@ export default async function OrganizerPage() {
                 >
                   <form action={publishRideSeries.bind(null, ride.id)}>
                     <Button type="submit" className="rounded-2xl px-4">
-                      Publish
+                      Publish ride series
                     </Button>
                   </form>
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/organizer/rides/${ride.id}`}>Edit</Link>
+                    <Link href={`/organizer/rides/${ride.id}`}>Edit ride series</Link>
                   </Button>
                   <form action={removeRideSeries.bind(null, ride.id)}>
                     <ConfirmSubmitButton
@@ -750,13 +904,13 @@ export default async function OrganizerPage() {
                       className="rounded-2xl px-4"
                       confirmationMessage={`Delete the ride series ${ride.title}?`}
                     >
-                      Delete
+                      Delete ride series
                     </ConfirmSubmitButton>
                   </form>
                   {ride.organizationListingStatus !== "PUBLISHED" ? (
                     <div className="w-full rounded-[1.15rem] border border-[color:var(--color-border-soft)] bg-[var(--color-paper-strong)]/45 px-4 py-3 text-sm leading-6 text-[var(--color-forest-muted)]">
-                      The parent organization is still a draft, so this ride will not appear on a
-                      public club or shop page until that organization is published.
+                      The parent organization is still a draft, so this ride series will not appear
+                      on the public site until that organization is published.
                     </div>
                   ) : null}
                 </ManagementCard>
@@ -769,10 +923,11 @@ export default async function OrganizerPage() {
           <ConsoleSection
             value="ride-published"
             icon={Bike}
-            eyebrow="Published"
-            title="Published ride series"
-            description="Live recurring rides already showing on the public site."
-            pill={countLabel(publishedRideSeries.length, "published ride")}
+            eyebrow="Published Ride Series"
+            title="Manage published ride series"
+            description="Use this box to open, edit, unpublish, or delete recurring rides that are already live on the public rides page."
+            details="Moving a ride series back to draft removes it from the public rides page."
+            pill={countLabel(publishedRideSeries.length, "published ride series")}
           >
             <div className="grid gap-4 lg:grid-cols-3">
               {publishedRideSeries.map((ride) => (
@@ -787,14 +942,14 @@ export default async function OrganizerPage() {
                   meta={ride.recurrenceSummary}
                 >
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/rides/${ride.slug}`}>View public page</Link>
+                    <Link href={`/rides/${ride.slug}`}>Open public page</Link>
                   </Button>
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/organizer/rides/${ride.id}`}>Edit</Link>
+                    <Link href={`/organizer/rides/${ride.id}`}>Edit ride series</Link>
                   </Button>
                   <form action={moveRideSeriesToDraft.bind(null, ride.id)}>
                     <Button type="submit" variant="outline" className="rounded-2xl px-4">
-                      Move to draft
+                      Move ride series to draft
                     </Button>
                   </form>
                   <form action={removeRideSeries.bind(null, ride.id)}>
@@ -804,7 +959,7 @@ export default async function OrganizerPage() {
                       className="rounded-2xl px-4"
                       confirmationMessage={`Delete the ride series ${ride.title}?`}
                     >
-                      Delete
+                      Delete ride series
                     </ConfirmSubmitButton>
                   </form>
                 </ManagementCard>
@@ -817,9 +972,10 @@ export default async function OrganizerPage() {
           <ConsoleSection
             value="event-drafts"
             icon={CalendarDays}
-            eyebrow="Drafts"
-            title="Event drafts"
-            description="One-off or recurring events waiting for publish."
+            eyebrow="Event Drafts"
+            title="Publish, edit, or delete event drafts"
+            description="Use this box to review event listings that are still private and decide whether to publish, revise, or remove them."
+            details="Publishing adds the event to the public events page."
             pill={countLabel(draftEventSeries.length, "draft")}
           >
             <div className="grid gap-4 lg:grid-cols-2">
@@ -835,11 +991,11 @@ export default async function OrganizerPage() {
                 >
                   <form action={publishEventSeries.bind(null, event.id)}>
                     <Button type="submit" className="rounded-2xl px-4">
-                      Publish
+                      Publish event
                     </Button>
                   </form>
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/organizer/events/${event.id}`}>Edit</Link>
+                    <Link href={`/organizer/events/${event.id}`}>Edit event</Link>
                   </Button>
                   <form action={removeEventSeries.bind(null, event.id)}>
                     <ConfirmSubmitButton
@@ -848,7 +1004,7 @@ export default async function OrganizerPage() {
                       className="rounded-2xl px-4"
                       confirmationMessage={`Delete the event ${event.title}?`}
                     >
-                      Delete
+                      Delete event
                     </ConfirmSubmitButton>
                   </form>
                 </ManagementCard>
@@ -861,9 +1017,10 @@ export default async function OrganizerPage() {
           <ConsoleSection
             value="event-published"
             icon={CalendarDays}
-            eyebrow="Published"
-            title="Published events"
-            description="Live events already visible on the public calendar."
+            eyebrow="Published Events"
+            title="Manage published events"
+            description="Use this box to open, edit, unpublish, or delete events that are already live on the public events page."
+            details="Moving an event back to draft removes it from the public events page."
             pill={countLabel(publishedEventSeries.length, "published event")}
           >
             <div className="grid gap-4 lg:grid-cols-3">
@@ -878,14 +1035,14 @@ export default async function OrganizerPage() {
                   summary={event.summary}
                 >
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/events/${event.slug}`}>View public page</Link>
+                    <Link href={`/events/${event.slug}`}>Open public page</Link>
                   </Button>
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/organizer/events/${event.id}`}>Edit</Link>
+                    <Link href={`/organizer/events/${event.id}`}>Edit event</Link>
                   </Button>
                   <form action={moveEventSeriesToDraft.bind(null, event.id)}>
                     <Button type="submit" variant="outline" className="rounded-2xl px-4">
-                      Move to draft
+                      Move event to draft
                     </Button>
                   </form>
                   <form action={removeEventSeries.bind(null, event.id)}>
@@ -895,7 +1052,7 @@ export default async function OrganizerPage() {
                       className="rounded-2xl px-4"
                       confirmationMessage={`Delete the event ${event.title}?`}
                     >
-                      Delete
+                      Delete event
                     </ConfirmSubmitButton>
                   </form>
                 </ManagementCard>
@@ -908,9 +1065,10 @@ export default async function OrganizerPage() {
           <ConsoleSection
             value="route-drafts"
             icon={Map}
-            eyebrow="Drafts"
-            title="Route guide drafts"
-            description="Route guides waiting for review or publish."
+            eyebrow="Route Guide Drafts"
+            title="Publish, edit, or delete route guide drafts"
+            description="Use this box to review route guides that are still private and decide whether to publish, revise, or remove them."
+            details="Publishing adds the route guide to the public routes page."
             pill={countLabel(draftRouteGuides.length, "draft")}
           >
             <div className="grid gap-4 lg:grid-cols-2">
@@ -926,11 +1084,11 @@ export default async function OrganizerPage() {
                 >
                   <form action={publishRouteGuide.bind(null, route.id)}>
                     <Button type="submit" className="rounded-2xl px-4">
-                      Publish
+                      Publish route guide
                     </Button>
                   </form>
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/organizer/routes/${route.id}`}>Edit</Link>
+                    <Link href={`/organizer/routes/${route.id}`}>Edit route guide</Link>
                   </Button>
                   <form action={removeRouteGuide.bind(null, route.id)}>
                     <ConfirmSubmitButton
@@ -939,7 +1097,7 @@ export default async function OrganizerPage() {
                       className="rounded-2xl px-4"
                       confirmationMessage={`Delete the route guide ${route.title}?`}
                     >
-                      Delete
+                      Delete route guide
                     </ConfirmSubmitButton>
                   </form>
                 </ManagementCard>
@@ -952,10 +1110,11 @@ export default async function OrganizerPage() {
           <ConsoleSection
             value="route-published"
             icon={Map}
-            eyebrow="Published"
-            title="Published route guides"
-            description="Live route pages already visible to riders and visitors."
-            pill={countLabel(publishedRouteGuides.length, "published route")}
+            eyebrow="Published Route Guides"
+            title="Manage published route guides"
+            description="Use this box to open, edit, unpublish, or delete route guides that are already live on the public routes page."
+            details="Moving a route guide back to draft removes it from the public routes page."
+            pill={countLabel(publishedRouteGuides.length, "published route guide")}
           >
             <div className="grid gap-4 lg:grid-cols-3">
               {publishedRouteGuides.map((route) => (
@@ -969,14 +1128,14 @@ export default async function OrganizerPage() {
                   summary={route.summary}
                 >
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/routes/${route.slug}`}>View public page</Link>
+                    <Link href={`/routes/${route.slug}`}>Open public page</Link>
                   </Button>
                   <Button asChild variant="outline" className="rounded-2xl px-4">
-                    <Link href={`/organizer/routes/${route.id}`}>Edit</Link>
+                    <Link href={`/organizer/routes/${route.id}`}>Edit route guide</Link>
                   </Button>
                   <form action={moveRouteGuideToDraft.bind(null, route.id)}>
                     <Button type="submit" variant="outline" className="rounded-2xl px-4">
-                      Move to draft
+                      Move route guide to draft
                     </Button>
                   </form>
                   <form action={removeRouteGuide.bind(null, route.id)}>
@@ -986,7 +1145,7 @@ export default async function OrganizerPage() {
                       className="rounded-2xl px-4"
                       confirmationMessage={`Delete the route guide ${route.title}?`}
                     >
-                      Delete
+                      Delete route guide
                     </ConfirmSubmitButton>
                   </form>
                 </ManagementCard>
@@ -994,7 +1153,7 @@ export default async function OrganizerPage() {
             </div>
           </ConsoleSection>
         ) : null}
-      </Accordion>
+      </section>
     </PageShell>
   );
 }
